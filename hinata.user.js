@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         hinata
 // @namespace    https://github.com/ieremi/hinata
-// @version      2.13
+// @version      2.14
 // @description  YouTube A-B loop
 // @match        https://www.youtube.com/watch*
 // @updateURL    https://raw.githubusercontent.com/ieremi/hinata/main/hinata.user.js
@@ -180,6 +180,12 @@
     // Coordinates a PositionRange and a LoopRange against the video element and the URL.
     class ABLoop {
         constructor() {
+            this.readLocation();
+        }
+        // (Re-)read min/max/a/b from the current URL. YouTube is a SPA: switching
+        // videos does not reload the page, so this must be called again on
+        // client-side navigation or the previous video's range would stick.
+        readLocation() {
             const url = new URL(location.href);
             const hashParams = new URLSearchParams(url.hash.slice(1));
             const t = parseInt(url.searchParams.get('t') ?? '', 10);
@@ -367,5 +373,14 @@
         event.stopImmediatePropagation();
         action();
     }, true);
+    // YouTube dispatches this on document after a client-side (SPA) navigation
+    // finishes, e.g. clicking to the next video. Re-sync to the new video.
+    document.addEventListener('yt-navigate-finish', () => {
+        if (!location.pathname.startsWith('/watch')) {
+            return;
+        }
+        controller.readLocation();
+        controller.start();
+    });
     controller.start();
 })();
