@@ -1,0 +1,13 @@
+{
+  "name": "hinata",
+  "private": true,
+  "version": "1.0.0",
+  "description": "YouTube A-B loop userscript",
+  "scripts": {
+    "build": "tsc -p tsconfig.json && node scripts/postbuild.mjs",
+    "watch": "tsc -p tsconfig.json --watch"
+  },
+  "devDependencies": {
+    "typescript": "^7.0.2"
+  }
+}
