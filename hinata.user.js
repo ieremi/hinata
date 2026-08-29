@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         hinata
 // @namespace    https://github.com/ieremi/hinata
-// @version      2.11
+// @version      2.12
 // @description  YouTube A-B loop
 // @match        https://www.youtube.com/watch*
 // @updateURL    https://raw.githubusercontent.com/ieremi/hinata/main/hinata.user.js
@@ -412,6 +412,25 @@
 
     setInterval(() => controller.tick(), 50);
 
+    const keyActions = new Map([
+        ['a', () => controller.nudgeA(-1)],
+        ['A', () => controller.nudgeA(1)],
+        ['b', () => controller.nudgeB(-1)],
+        ['B', () => controller.nudgeB(1)],
+        ['c', () => controller.moveLoop(2)],
+        ['C', () => controller.moveLoop(4)],
+        ['g', () => controller.moveLoop(-2)],
+        ['G', () => controller.moveLoop(-4)],
+        ['p', () => controller.setPositionRange()],
+        ['l', () => controller.unbindLoop()],
+        ['L', () => controller.unbindPositionRange()],
+        ['r', () => controller.initializeLoop()],
+        ['s', () => { controller.seekA(); controller.show(); }],
+        ['2', () => controller.setLoop(2)],
+        ['4', () => controller.setLoop(4)],
+        ['z', () => controller.roundParameters()]
+    ]);
+
     document.addEventListener('keydown', (event) => {
         if (isTyping(event.target)) {
             return;
@@ -426,20 +445,9 @@
             return;
         }
 
-        const keys = [
-            'a', 'A',
-            'b', 'B',
-            'c', 'C',
-            'g', 'G',
-            'p',
-            'l', 'L',
-            'r',
-            's',
-            '2', '4',
-            'z'
-        ];
+        const action = keyActions.get(event.key);
 
-        if (!keys.includes(event.key)) {
+        if (!action) {
             return;
         }
 
@@ -447,72 +455,7 @@
         event.stopPropagation();
         event.stopImmediatePropagation();
 
-        switch (event.key) {
-            case 'a':
-                controller.nudgeA(-1);
-                return;
-
-            case 'A':
-                controller.nudgeA(1);
-                return;
-
-            case 'b':
-                controller.nudgeB(-1);
-                return;
-
-            case 'B':
-                controller.nudgeB(1);
-                return;
-
-            case 'c':
-                controller.moveLoop(2);
-                return;
-
-            case 'C':
-                controller.moveLoop(4);
-                return;
-
-            case 'g':
-                controller.moveLoop(-2);
-                return;
-
-            case 'G':
-                controller.moveLoop(-4);
-                return;
-
-            case 'p':
-                controller.setPositionRange();
-                return;
-
-            case 'l':
-                controller.unbindLoop();
-                return;
-
-            case 'L':
-                controller.unbindPositionRange();
-                return;
-
-            case 'r':
-                controller.initializeLoop();
-                return;
-
-            case 's':
-                controller.seekA();
-                controller.show();
-                return;
-
-            case '2':
-                controller.setLoop(2);
-                return;
-
-            case '4':
-                controller.setLoop(4);
-                return;
-
-            case 'z':
-                controller.roundParameters();
-                return;
-        }
+        action();
     }, true);
 
     controller.start();
