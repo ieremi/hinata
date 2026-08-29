@@ -4,8 +4,8 @@
 // @version      2.7
 // @description  YouTube A-B loop
 // @match        https://www.youtube.com/watch*
-// @updateURL    https://raw.githubusercontent.com/ieremi/hinata/main/hinata.js
-// @downloadURL    https://raw.githubusercontent.com/ieremi/hinata/main/hinata.js
+// @updateURL    https://raw.githubusercontent.com/ieremi/hinata/main/hinata.user.js
+// @downloadURL    https://raw.githubusercontent.com/ieremi/hinata/main/hinata.user.js
 // @grant        none
 // ==/UserScript==
 
