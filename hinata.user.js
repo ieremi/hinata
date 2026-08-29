@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         hinata
 // @namespace    https://github.com/ieremi/hinata
-// @version      2.10
+// @version      2.11
 // @description  YouTube A-B loop
 // @match        https://www.youtube.com/watch*
 // @updateURL    https://raw.githubusercontent.com/ieremi/hinata/main/hinata.user.js
@@ -200,32 +200,16 @@
             this.normalize(position);
         }
 
-        decrementA(position) {
-            this.a = position.clamp(this.a - 1);
+        nudgeA(delta, position) {
+            this.a = position.clamp(this.a + delta);
 
             if (this.b !== null) {
                 this.a = Math.min(this.a, this.b);
             }
         }
 
-        incrementA(position) {
-            this.a = position.clamp(this.a + 1);
-
-            if (this.b !== null) {
-                this.a = Math.min(this.a, this.b);
-            }
-        }
-
-        decrementB(position) {
-            this.b = position.clamp(this.b - 1);
-
-            if (this.a !== null) {
-                this.b = Math.max(this.a, this.b);
-            }
-        }
-
-        incrementB(position) {
-            this.b = position.clamp(this.b + 1);
+        nudgeB(delta, position) {
+            this.b = position.clamp(this.b + delta);
 
             if (this.a !== null) {
                 this.b = Math.max(this.a, this.b);
@@ -359,44 +343,23 @@
             this.show();
         }
 
-        decrementA() {
+        nudgeA(delta) {
             if (this.loop.a === null) {
                 return;
             }
 
-            this.loop.decrementA(this.position);
+            this.loop.nudgeA(delta, this.position);
             this.seekA();
             this.updateUrl();
             this.show();
         }
 
-        incrementA() {
-            if (this.loop.a === null) {
-                return;
-            }
-
-            this.loop.incrementA(this.position);
-            this.seekA();
-            this.updateUrl();
-            this.show();
-        }
-
-        decrementB() {
+        nudgeB(delta) {
             if (this.loop.b === null) {
                 return;
             }
 
-            this.loop.decrementB(this.position);
-            this.updateUrl();
-            this.show();
-        }
-
-        incrementB() {
-            if (this.loop.b === null) {
-                return;
-            }
-
-            this.loop.incrementB(this.position);
+            this.loop.nudgeB(delta, this.position);
             this.updateUrl();
             this.show();
         }
@@ -486,19 +449,19 @@
 
         switch (event.key) {
             case 'a':
-                controller.decrementA();
+                controller.nudgeA(-1);
                 return;
 
             case 'A':
-                controller.incrementA();
+                controller.nudgeA(1);
                 return;
 
             case 'b':
-                controller.decrementB();
+                controller.nudgeB(-1);
                 return;
 
             case 'B':
-                controller.incrementB();
+                controller.nudgeB(1);
                 return;
 
             case 'c':
