@@ -1,11 +1,11 @@
 // ==UserScript==
 // @name         YouTube AB Loop
-// @namespace    https://github.com/ieremi/dots
-// @version      2.6
+// @namespace    https://github.com/ieremi/hinata
+// @version      2.7
 // @description  YouTube A-B loop
 // @match        https://www.youtube.com/watch*
-// @updateURL    https://raw.githubusercontent.com/ieremi/dots/master/Userscript/ab-loop.user.js
-// @downloadURL  https://raw.githubusercontent.com/ieremi/dots/master/Userscript/ab-loop.user.js
+// @updateURL    https://raw.githubusercontent.com/ieremi/hinata/main/hinata.js
+// @downloadURL    https://raw.githubusercontent.com/ieremi/hinata/main/hinata.js
 // @grant        none
 // ==/UserScript==
 
