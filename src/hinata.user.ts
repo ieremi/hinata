@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         hinata
 // @namespace    https://github.com/ieremi/hinata
-// @version      2.12
+// @version      2.13
 // @description  YouTube A-B loop
 // @match        https://www.youtube.com/watch*
 // @updateURL    https://raw.githubusercontent.com/ieremi/hinata/main/hinata.user.js
@@ -280,6 +280,12 @@
             }
         }
 
+        seekB(): void {
+            if (this.loop.b !== null) {
+                this.seek(this.loop.b - 2);
+            }
+        }
+
         moveLoop(seconds: number): void {
             if (this.loop.a === null || this.loop.b === null) {
                 return;
@@ -432,6 +438,7 @@
         ['L', () => controller.unbindPositionRange()],
         ['r', () => controller.initializeLoop()],
         ['s', () => { controller.seekA(); controller.show(); }],
+        ['S', () => { controller.seekB(); controller.show(); }],
         ['2', () => controller.setLoop(2)],
         ['4', () => controller.setLoop(4)],
         ['z', () => controller.roundParameters()]
