@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         hinata
 // @namespace    https://github.com/ieremi/hinata
-// @version      2.14
+// @version      2.15
 // @description  YouTube A-B loop
 // @match        https://www.youtube.com/watch*
 // @updateURL    https://raw.githubusercontent.com/ieremi/hinata/main/hinata.user.js
@@ -344,7 +344,8 @@
         ['C', () => controller.moveLoop(4)],
         ['g', () => controller.moveLoop(-2)],
         ['G', () => controller.moveLoop(-4)],
-        ['p', () => controller.setPositionRange()],
+        ['p', () => controller.initializeLoop()],
+        ['P', () => controller.setPositionRange()],
         ['l', () => controller.unbindLoop()],
         ['L', () => controller.unbindPositionRange()],
         ['r', () => controller.initializeLoop()],
