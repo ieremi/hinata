@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         YouTube AB Loop
+// @name         hinata
 // @namespace    https://github.com/ieremi/hinata
 // @version      2.7
 // @description  YouTube A-B loop
