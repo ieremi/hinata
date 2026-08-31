@@ -326,7 +326,7 @@
             this.commit(true);
         }
 
-        // Set the position range to the current loop range.
+        // Set the hard range to the current loop range.
         setHardRange(): void {
             if (this.softRange.a === null || this.softRange.b === null) {
                 console.log('[AB LOOP] A and B are not set');
