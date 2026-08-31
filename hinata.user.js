@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         hinata
 // @namespace    https://github.com/ieremi/hinata
-// @version      2.19
+// @version      2.20
 // @description  YouTube A-B loop
 // @match        https://www.youtube.com/watch*
 // @updateURL    https://raw.githubusercontent.com/ieremi/hinata/main/hinata.user.js
@@ -107,65 +107,65 @@
     }
     // The A-B loop: [a, b]. Always kept within its HardRange.
     class SoftRange extends Range {
-        static readFrom(hashParams, position, initialA) {
+        static readFrom(hashParams, hardRange, initialA) {
             const a = hashParams.has('ss')
                 ? parseNumber(hashParams.get('ss'))
-                : position.min ?? initialA;
+                : hardRange.min ?? initialA;
             const b = hashParams.has('to')
                 ? parseNumber(hashParams.get('to'))
-                : position.max;
+                : hardRange.max;
             return new SoftRange(a, b);
         }
         get a() { return this.lo; }
         set a(value) { this.lo = value; }
         get b() { return this.hi; }
         set b(value) { this.hi = value; }
-        normalize(position) {
+        normalize(hardRange) {
             if (this.a !== null) {
-                this.a = position.clamp(this.a);
+                this.a = hardRange.clamp(this.a);
             }
             if (this.b !== null) {
-                this.b = position.clamp(this.b);
+                this.b = hardRange.clamp(this.b);
             }
             if (this.a !== null && this.b !== null && this.a > this.b) {
                 this.b = this.a;
             }
         }
-        // Shift [a, b] by `seconds`, sliding to stay within `position`.
-        move(seconds, position) {
+        // Shift [a, b] by `seconds`, sliding to stay within `hardRange`.
+        move(seconds, hardRange) {
             const length = this.b - this.a;
             let nextA = this.a + seconds;
             let nextB = this.b + seconds;
-            if (position.min !== null && nextA < position.min) {
-                nextA = position.min;
-                nextB = position.min + length;
+            if (hardRange.min !== null && nextA < hardRange.min) {
+                nextA = hardRange.min;
+                nextB = hardRange.min + length;
             }
-            if (position.max !== null && nextB > position.max) {
-                nextB = position.max;
-                nextA = position.max - length;
+            if (hardRange.max !== null && nextB > hardRange.max) {
+                nextB = hardRange.max;
+                nextA = hardRange.max - length;
             }
-            this.a = position.clamp(nextA);
-            this.b = position.clamp(nextB);
-            this.normalize(position);
+            this.a = hardRange.clamp(nextA);
+            this.b = hardRange.clamp(nextB);
+            this.normalize(hardRange);
         }
-        startFrom(currentTime, seconds, position) {
-            this.a = position.clamp(currentTime);
-            this.b = position.clamp(this.a + seconds);
-            this.normalize(position);
+        startFrom(currentTime, seconds, hardRange) {
+            this.a = hardRange.clamp(currentTime);
+            this.b = hardRange.clamp(this.a + seconds);
+            this.normalize(hardRange);
         }
-        reset(position) {
-            this.a = position.min;
-            this.b = position.max;
-            this.normalize(position);
+        reset(hardRange) {
+            this.a = hardRange.min;
+            this.b = hardRange.max;
+            this.normalize(hardRange);
         }
-        nudgeA(delta, position) {
-            this.a = position.clamp(this.a + delta);
+        nudgeA(delta, hardRange) {
+            this.a = hardRange.clamp(this.a + delta);
             if (this.b !== null) {
                 this.a = Math.min(this.a, this.b);
             }
         }
-        nudgeB(delta, position) {
-            this.b = position.clamp(this.b + delta);
+        nudgeB(delta, hardRange) {
+            this.b = hardRange.clamp(this.b + delta);
             if (this.a !== null) {
                 this.b = Math.max(this.a, this.b);
             }
@@ -193,29 +193,29 @@
             // simply opening a timestamped link would block seeking before it.
             const t = parseInt(url.searchParams.get('t') ?? '', 10);
             const initialA = Number.isFinite(t) ? t : null;
-            this.position = HardRange.readFrom(hashParams);
-            this.loop = SoftRange.readFrom(hashParams, this.position, initialA);
+            this.hardRange = HardRange.readFrom(hashParams);
+            this.loop = SoftRange.readFrom(hashParams, this.hardRange, initialA);
         }
         normalizeState() {
-            this.position.normalize();
-            this.loop.normalize(this.position);
+            this.hardRange.normalize();
+            this.loop.normalize(this.hardRange);
         }
         updateUrl() {
             const url = new URL(location.href);
             const params = new URLSearchParams(url.hash.slice(1));
-            this.position.writeTo(params);
+            this.hardRange.writeTo(params);
             this.loop.writeTo(params);
             const hash = params.toString();
             url.hash = hash || '';
             history.replaceState(null, '', url);
         }
         show() {
-            console.log(`[AB LOOP] ${this.position.format()} ${this.loop.format()}`);
+            console.log(`[AB LOOP] ${this.hardRange.format()} ${this.loop.format()}`);
         }
         seek(position) {
             const video = getVideo();
             if (video && Number.isFinite(position)) {
-                video.currentTime = this.position.clamp(position);
+                video.currentTime = this.hardRange.clamp(position);
             }
         }
         seekA() {
@@ -232,7 +232,7 @@
             if (this.loop.a === null || this.loop.b === null) {
                 return;
             }
-            this.loop.move(seconds, this.position);
+            this.loop.move(seconds, this.hardRange);
             this.seekA();
             this.updateUrl();
             this.show();
@@ -242,14 +242,14 @@
             if (!video) {
                 return;
             }
-            this.loop.startFrom(video.currentTime, seconds, this.position);
+            this.loop.startFrom(video.currentTime, seconds, this.hardRange);
             this.seekA();
             this.updateUrl();
             this.show();
         }
         // Reset [a, b] to [min, max].
         initializeLoop() {
-            this.loop.reset(this.position);
+            this.loop.reset(this.hardRange);
             this.seekA();
             this.updateUrl();
             this.show();
@@ -260,7 +260,7 @@
                 console.log('[AB LOOP] A and B are not set');
                 return;
             }
-            this.position.adopt(this.loop);
+            this.hardRange.adopt(this.loop);
             this.normalizeState();
             this.updateUrl();
             this.show();
@@ -273,13 +273,13 @@
         }
         // Unbind the playback position range.
         unbindHardRange() {
-            this.position.unbind();
+            this.hardRange.unbind();
             this.updateUrl();
             this.show();
         }
         // Round all parameters to the nearest integer.
         roundParameters() {
-            this.position.round();
+            this.hardRange.round();
             this.loop.round();
             this.normalizeState();
             this.updateUrl();
@@ -289,7 +289,7 @@
             if (this.loop.a === null) {
                 return;
             }
-            this.loop.nudgeA(delta, this.position);
+            this.loop.nudgeA(delta, this.hardRange);
             this.seekA();
             this.updateUrl();
             this.show();
@@ -298,7 +298,7 @@
             if (this.loop.b === null) {
                 return;
             }
-            this.loop.nudgeB(delta, this.position);
+            this.loop.nudgeB(delta, this.hardRange);
             this.updateUrl();
             this.show();
         }
@@ -315,12 +315,12 @@
                 return;
             }
             // Keep the playback position within [min, max].
-            if (this.position.min !== null && video.currentTime < this.position.min) {
-                video.currentTime = this.position.min;
+            if (this.hardRange.min !== null && video.currentTime < this.hardRange.min) {
+                video.currentTime = this.hardRange.min;
                 return;
             }
-            if (this.position.max !== null && video.currentTime > this.position.max) {
-                video.currentTime = this.position.max;
+            if (this.hardRange.max !== null && video.currentTime > this.hardRange.max) {
+                video.currentTime = this.hardRange.max;
                 video.pause();
             }
         }
