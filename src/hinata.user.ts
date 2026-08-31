@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         hinata
 // @namespace    https://github.com/ieremi/hinata
-// @version      2.15
+// @version      2.16
 // @description  YouTube A-B loop
 // @match        https://www.youtube.com/watch*
 // @updateURL    https://raw.githubusercontent.com/ieremi/hinata/main/hinata.user.js
@@ -78,10 +78,10 @@
 
     // The allowed playback range: [min, max].
     class PositionRange extends Range {
-        static readFrom(hashParams: URLSearchParams, initialMin: number): PositionRange {
+        static readFrom(hashParams: URLSearchParams): PositionRange {
             const min = hashParams.has('min')
                 ? parseNumber(hashParams.get('min'))
-                : initialMin;
+                : null;
 
             const max = hashParams.has('max')
                 ? parseNumber(hashParams.get('max'))
@@ -135,10 +135,10 @@
 
     // The A-B loop: [a, b]. Always kept within its PositionRange.
     class LoopRange extends Range {
-        static readFrom(hashParams: URLSearchParams, position: PositionRange): LoopRange {
+        static readFrom(hashParams: URLSearchParams, position: PositionRange, initialA: number | null): LoopRange {
             const a = hashParams.has('ss')
                 ? parseNumber(hashParams.get('ss'))
-                : position.min;
+                : position.min ?? initialA;
 
             const b = hashParams.has('to')
                 ? parseNumber(hashParams.get('to'))
@@ -244,11 +244,14 @@
             const url = new URL(location.href);
             const hashParams = new URLSearchParams(url.hash.slice(1));
 
+            // YouTube's own ?t= share-link timestamp. Used only to seed the loop
+            // start (a) below — it must not become a permanent min floor, or
+            // simply opening a timestamped link would block seeking before it.
             const t = parseInt(url.searchParams.get('t') ?? '', 10);
-            const initialMin = Number.isFinite(t) ? t : 0;
+            const initialA = Number.isFinite(t) ? t : null;
 
-            this.position = PositionRange.readFrom(hashParams, initialMin);
-            this.loop = LoopRange.readFrom(hashParams, this.position);
+            this.position = PositionRange.readFrom(hashParams);
+            this.loop = LoopRange.readFrom(hashParams, this.position, initialA);
         }
 
         normalizeState(): void {
