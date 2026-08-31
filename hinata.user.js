@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         hinata
 // @namespace    https://github.com/ieremi/hinata
-// @version      2.29
+// @version      2.30
 // @description  YouTube A-B loop
 // @match        https://www.youtube.com/watch*
 // @updateURL    https://raw.githubusercontent.com/ieremi/hinata/main/hinata.user.js
@@ -108,11 +108,11 @@
     // The A-B loop: [a, b]. Always kept within its HardRange.
     class SoftRange extends Range {
         static readFrom(hashParams, hardRange, initialA) {
-            const a = hashParams.has('ss')
-                ? parseNumber(hashParams.get('ss'))
+            const a = hashParams.has('a')
+                ? parseNumber(hashParams.get('a'))
                 : hardRange.min ?? initialA;
-            const b = hashParams.has('to')
-                ? parseNumber(hashParams.get('to'))
+            const b = hashParams.has('b')
+                ? parseNumber(hashParams.get('b'))
                 : hardRange.max;
             return new SoftRange(a, b);
         }
@@ -171,7 +171,7 @@
             }
         }
         writeTo(params) {
-            super.writeTo(params, 'ss', 'to');
+            super.writeTo(params, 'a', 'b');
         }
         format() {
             return super.format('A', 'B');
