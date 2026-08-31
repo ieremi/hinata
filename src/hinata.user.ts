@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         hinata
 // @namespace    https://github.com/ieremi/hinata
-// @version      2.34
+// @version      2.35
 // @description  YouTube A-B loop
 // @match        https://www.youtube.com/watch*
 // @updateURL    https://raw.githubusercontent.com/ieremi/hinata/main/hinata.user.js
@@ -320,12 +320,6 @@
             this.commit(true);
         }
 
-        // Reset [a, b] to [min, max].
-        initialize(): void {
-            this.softRange.initialize(this.hardRange);
-            this.commit(true);
-        }
-
         // Set the hard range to the current loop range.
         setHardRange(): void {
             if (this.softRange.a === null || this.softRange.b === null) {
@@ -420,7 +414,12 @@
         ['C', () => loopPlayer.move(4)],
         ['g', () => loopPlayer.move(-2)],
         ['G', () => loopPlayer.move(-4)],
-        ['p', () => loopPlayer.initialize()],
+        ['p', () => {
+            loopPlayer.softRange.initialize(loopPlayer.hardRange);
+            loopPlayer.seek(loopPlayer.softRange.a);
+            loopPlayer.updateUrl();
+            loopPlayer.show();
+        }],
         ['P', () => loopPlayer.setHardRange()],
         ['l', () => { loopPlayer.softRange.unbind(); loopPlayer.updateUrl(); loopPlayer.show(); }],
         ['L', () => { loopPlayer.hardRange.unbind(); loopPlayer.updateUrl(); loopPlayer.show(); }],
