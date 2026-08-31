@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         hinata
 // @namespace    https://github.com/ieremi/hinata
-// @version      2.24
+// @version      2.26
 // @description  YouTube A-B loop
 // @match        https://www.youtube.com/watch*
 // @updateURL    https://raw.githubusercontent.com/ieremi/hinata/main/hinata.user.js
@@ -228,7 +228,7 @@
                 this.seek(this.softRange.b - 2);
             }
         }
-        moveLoop(seconds) {
+        move(seconds) {
             if (this.softRange.a === null || this.softRange.b === null) {
                 return;
             }
@@ -237,7 +237,7 @@
             this.updateUrl();
             this.show();
         }
-        setLoop(seconds) {
+        startFrom(seconds) {
             const video = getVideo();
             if (!video) {
                 return;
@@ -343,18 +343,18 @@
         ['A', () => loopPlayer.nudgeA(1)],
         ['b', () => loopPlayer.nudgeB(-1)],
         ['B', () => loopPlayer.nudgeB(1)],
-        ['c', () => loopPlayer.moveLoop(2)],
-        ['C', () => loopPlayer.moveLoop(4)],
-        ['g', () => loopPlayer.moveLoop(-2)],
-        ['G', () => loopPlayer.moveLoop(-4)],
+        ['c', () => loopPlayer.move(2)],
+        ['C', () => loopPlayer.move(4)],
+        ['g', () => loopPlayer.move(-2)],
+        ['G', () => loopPlayer.move(-4)],
         ['p', () => loopPlayer.initialize()],
         ['P', () => loopPlayer.setHardRange()],
         ['l', () => loopPlayer.unbindLoop()],
         ['L', () => loopPlayer.unbindHardRange()],
         ['s', () => { loopPlayer.seekA(); loopPlayer.show(); }],
         ['S', () => { loopPlayer.seekB(); loopPlayer.show(); }],
-        ['2', () => loopPlayer.setLoop(2)],
-        ['4', () => loopPlayer.setLoop(4)],
+        ['2', () => loopPlayer.startFrom(2)],
+        ['4', () => loopPlayer.startFrom(4)],
         ['z', () => loopPlayer.roundParameters()]
     ]);
     document.addEventListener('keydown', (event) => {
