@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         hinata
 // @namespace    https://github.com/ieremi/hinata
-// @version      2.23
+// @version      2.24
 // @description  YouTube A-B loop
 // @match        https://www.youtube.com/watch*
 // @updateURL    https://raw.githubusercontent.com/ieremi/hinata/main/hinata.user.js
@@ -430,28 +430,28 @@
         }
     }
 
-    const controller = new LoopPlayer();
+    const loopPlayer = new LoopPlayer();
 
-    setInterval(() => controller.tick(), 50);
+    setInterval(() => loopPlayer.tick(), 50);
 
     const keyActions: Map<string, () => void> = new Map([
-        ['a', () => controller.nudgeA(-1)],
-        ['A', () => controller.nudgeA(1)],
-        ['b', () => controller.nudgeB(-1)],
-        ['B', () => controller.nudgeB(1)],
-        ['c', () => controller.moveLoop(2)],
-        ['C', () => controller.moveLoop(4)],
-        ['g', () => controller.moveLoop(-2)],
-        ['G', () => controller.moveLoop(-4)],
-        ['p', () => controller.initialize()],
-        ['P', () => controller.setHardRange()],
-        ['l', () => controller.unbindLoop()],
-        ['L', () => controller.unbindHardRange()],
-        ['s', () => { controller.seekA(); controller.show(); }],
-        ['S', () => { controller.seekB(); controller.show(); }],
-        ['2', () => controller.setLoop(2)],
-        ['4', () => controller.setLoop(4)],
-        ['z', () => controller.roundParameters()]
+        ['a', () => loopPlayer.nudgeA(-1)],
+        ['A', () => loopPlayer.nudgeA(1)],
+        ['b', () => loopPlayer.nudgeB(-1)],
+        ['B', () => loopPlayer.nudgeB(1)],
+        ['c', () => loopPlayer.moveLoop(2)],
+        ['C', () => loopPlayer.moveLoop(4)],
+        ['g', () => loopPlayer.moveLoop(-2)],
+        ['G', () => loopPlayer.moveLoop(-4)],
+        ['p', () => loopPlayer.initialize()],
+        ['P', () => loopPlayer.setHardRange()],
+        ['l', () => loopPlayer.unbindLoop()],
+        ['L', () => loopPlayer.unbindHardRange()],
+        ['s', () => { loopPlayer.seekA(); loopPlayer.show(); }],
+        ['S', () => { loopPlayer.seekB(); loopPlayer.show(); }],
+        ['2', () => loopPlayer.setLoop(2)],
+        ['4', () => loopPlayer.setLoop(4)],
+        ['z', () => loopPlayer.roundParameters()]
     ]);
 
     document.addEventListener('keydown', (event: KeyboardEvent) => {
@@ -488,9 +488,9 @@
             return;
         }
 
-        controller.readLocation();
-        controller.start();
+        loopPlayer.readLocation();
+        loopPlayer.start();
     });
 
-    controller.start();
+    loopPlayer.start();
 })();
