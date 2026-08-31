@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         hinata
 // @namespace    https://github.com/ieremi/hinata
-// @version      2.31
+// @version      2.32
 // @description  YouTube A-B loop
 // @match        https://www.youtube.com/watch*
 // @updateURL    https://raw.githubusercontent.com/ieremi/hinata/main/hinata.user.js
@@ -254,7 +254,7 @@
             this.softRange = SoftRange.readFrom(hashParams, this.hardRange, initialA);
         }
 
-        normalizeState(): void {
+        normalize(): void {
             this.hardRange.normalize();
             this.softRange.normalize(this.hardRange);
         }
@@ -334,7 +334,7 @@
             }
 
             this.hardRange.adopt(this.softRange);
-            this.normalizeState();
+            this.normalize();
             this.commit(false);
         }
 
@@ -343,7 +343,7 @@
             this.hardRange.round();
             this.softRange.round();
 
-            this.normalizeState();
+            this.normalize();
             this.commit(false);
         }
 
@@ -402,7 +402,7 @@
                 return;
             }
 
-            this.normalizeState();
+            this.normalize();
             this.commit(true);
         }
     }

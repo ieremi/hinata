@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         hinata
 // @namespace    https://github.com/ieremi/hinata
-// @version      2.31
+// @version      2.32
 // @description  YouTube A-B loop
 // @match        https://www.youtube.com/watch*
 // @updateURL    https://raw.githubusercontent.com/ieremi/hinata/main/hinata.user.js
@@ -196,7 +196,7 @@
             this.hardRange = HardRange.readFrom(hashParams);
             this.softRange = SoftRange.readFrom(hashParams, this.hardRange, initialA);
         }
-        normalizeState() {
+        normalize() {
             this.hardRange.normalize();
             this.softRange.normalize(this.hardRange);
         }
@@ -258,14 +258,14 @@
                 return;
             }
             this.hardRange.adopt(this.softRange);
-            this.normalizeState();
+            this.normalize();
             this.commit(false);
         }
         // Round all parameters to the nearest integer.
         roundParameters() {
             this.hardRange.round();
             this.softRange.round();
-            this.normalizeState();
+            this.normalize();
             this.commit(false);
         }
         nudgeA(delta) {
@@ -310,7 +310,7 @@
                 setTimeout(() => this.start(), 200);
                 return;
             }
-            this.normalizeState();
+            this.normalize();
             this.commit(true);
         }
     }
