@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         hinata
 // @namespace    https://github.com/ieremi/hinata
-// @version      2.39
+// @version      2.40
 // @description  YouTube A-B loop
 // @match        https://www.youtube.com/watch*
 // @updateURL    https://raw.githubusercontent.com/ieremi/hinata/main/hinata.user.js
@@ -145,12 +145,20 @@
             return value;
         }
 
-        // Adopt the current loop range as the new position range.
-        adopt(softRange: SoftRange): void {
+        // Copy the current loop range as the new hard range.
+        // Returns false (no-op) if the loop isn't set.
+        copyFrom(softRange: SoftRange): boolean {
+            if (softRange.a === null || softRange.b === null) {
+                console.log('[AB LOOP] A and B are not set');
+                return false;
+            }
+
             this.min = softRange.a;
             this.max = softRange.b;
 
             this.persist();
+
+            return true;
         }
 
         writeTo(params: URLSearchParams): void {
@@ -357,17 +365,6 @@
             this.show();
         }
 
-        // Set the hard range to the current loop range.
-        setHardRange(): void {
-            if (this.softRange.a === null || this.softRange.b === null) {
-                console.log('[AB LOOP] A and B are not set');
-                return;
-            }
-
-            this.hardRange.adopt(this.softRange);
-            this.normalize();
-            this.show();
-        }
 
         nudgeA(delta: number): void {
             if (this.softRange.a === null) {
@@ -449,7 +446,14 @@
             loopPlayer.seek(loopPlayer.softRange.a);
             loopPlayer.show();
         }],
-        ['P', () => loopPlayer.setHardRange()],
+        ['P', () => {
+            if (!loopPlayer.hardRange.copyFrom(loopPlayer.softRange)) {
+                return;
+            }
+
+            loopPlayer.normalize();
+            loopPlayer.show();
+        }],
         ['l', () => { loopPlayer.softRange.unbind(); loopPlayer.show(); }],
         ['L', () => { loopPlayer.hardRange.unbind(); loopPlayer.show(); }],
         ['s', () => { loopPlayer.seek(loopPlayer.softRange.a); loopPlayer.show(); }],
