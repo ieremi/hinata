@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         hinata
 // @namespace    https://github.com/ieremi/hinata
-// @version      2.40
+// @version      2.41
 // @description  YouTube A-B loop
 // @match        https://www.youtube.com/watch*
 // @updateURL    https://raw.githubusercontent.com/ieremi/hinata/main/hinata.user.js
@@ -67,11 +67,6 @@
         round(): void {
             if (this.lo !== null) this.lo = Math.round(this.lo);
             if (this.hi !== null) this.hi = Math.round(this.hi);
-        }
-
-        writeTo(params: URLSearchParams, loName: string, hiName: string): void {
-            setOrDelete(params, loName, this.lo);
-            setOrDelete(params, hiName, this.hi);
         }
 
         format(loLabel: string, hiLabel: string): string {
@@ -159,10 +154,6 @@
             this.persist();
 
             return true;
-        }
-
-        writeTo(params: URLSearchParams): void {
-            super.writeTo(params, 'min', 'max');
         }
 
         format(): string {
@@ -281,10 +272,6 @@
             }
 
             this.persist();
-        }
-
-        writeTo(params: URLSearchParams): void {
-            super.writeTo(params, 'a', 'b');
         }
 
         format(): string {
