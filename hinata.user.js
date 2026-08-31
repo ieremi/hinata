@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         hinata
 // @namespace    https://github.com/ieremi/hinata
-// @version      2.16
+// @version      2.17
 // @description  YouTube A-B loop
 // @match        https://www.youtube.com/watch*
 // @updateURL    https://raw.githubusercontent.com/ieremi/hinata/main/hinata.user.js
@@ -62,7 +62,7 @@
         }
     }
     // The allowed playback range: [min, max].
-    class PositionRange extends Range {
+    class HardRange extends Range {
         static readFrom(hashParams) {
             const min = hashParams.has('min')
                 ? parseNumber(hashParams.get('min'))
@@ -70,7 +70,7 @@
             const max = hashParams.has('max')
                 ? parseNumber(hashParams.get('max'))
                 : null;
-            return new PositionRange(min, max);
+            return new HardRange(min, max);
         }
         get min() { return this.lo; }
         set min(value) { this.lo = value; }
@@ -105,8 +105,8 @@
             return super.format('min', 'max');
         }
     }
-    // The A-B loop: [a, b]. Always kept within its PositionRange.
-    class LoopRange extends Range {
+    // The A-B loop: [a, b]. Always kept within its HardRange.
+    class SoftRange extends Range {
         static readFrom(hashParams, position, initialA) {
             const a = hashParams.has('ss')
                 ? parseNumber(hashParams.get('ss'))
@@ -114,7 +114,7 @@
             const b = hashParams.has('to')
                 ? parseNumber(hashParams.get('to'))
                 : position.max;
-            return new LoopRange(a, b);
+            return new SoftRange(a, b);
         }
         get a() { return this.lo; }
         set a(value) { this.lo = value; }
@@ -177,8 +177,8 @@
             return super.format('A', 'B');
         }
     }
-    // Coordinates a PositionRange and a LoopRange against the video element and the URL.
-    class ABLoop {
+    // Coordinates a HardRange and a SoftRange against the video element and the URL.
+    class LoopPlayer {
         constructor() {
             this.readLocation();
         }
@@ -193,8 +193,8 @@
             // simply opening a timestamped link would block seeking before it.
             const t = parseInt(url.searchParams.get('t') ?? '', 10);
             const initialA = Number.isFinite(t) ? t : null;
-            this.position = PositionRange.readFrom(hashParams);
-            this.loop = LoopRange.readFrom(hashParams, this.position, initialA);
+            this.position = HardRange.readFrom(hashParams);
+            this.loop = SoftRange.readFrom(hashParams, this.position, initialA);
         }
         normalizeState() {
             this.position.normalize();
@@ -336,7 +336,7 @@
             this.show();
         }
     }
-    const controller = new ABLoop();
+    const controller = new LoopPlayer();
     setInterval(() => controller.tick(), 50);
     const keyActions = new Map([
         ['a', () => controller.nudgeA(-1)],

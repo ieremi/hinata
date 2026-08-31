@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         hinata
 // @namespace    https://github.com/ieremi/hinata
-// @version      2.16
+// @version      2.17
 // @description  YouTube A-B loop
 // @match        https://www.youtube.com/watch*
 // @updateURL    https://raw.githubusercontent.com/ieremi/hinata/main/hinata.user.js
@@ -77,8 +77,8 @@
     }
 
     // The allowed playback range: [min, max].
-    class PositionRange extends Range {
-        static readFrom(hashParams: URLSearchParams): PositionRange {
+    class HardRange extends Range {
+        static readFrom(hashParams: URLSearchParams): HardRange {
             const min = hashParams.has('min')
                 ? parseNumber(hashParams.get('min'))
                 : null;
@@ -87,7 +87,7 @@
                 ? parseNumber(hashParams.get('max'))
                 : null;
 
-            return new PositionRange(min, max);
+            return new HardRange(min, max);
         }
 
         get min(): number | null { return this.lo; }
@@ -119,7 +119,7 @@
         }
 
         // Adopt the current loop range as the new position range.
-        adopt(loop: LoopRange): void {
+        adopt(loop: SoftRange): void {
             this.min = loop.a;
             this.max = loop.b;
         }
@@ -133,9 +133,9 @@
         }
     }
 
-    // The A-B loop: [a, b]. Always kept within its PositionRange.
-    class LoopRange extends Range {
-        static readFrom(hashParams: URLSearchParams, position: PositionRange, initialA: number | null): LoopRange {
+    // The A-B loop: [a, b]. Always kept within its HardRange.
+    class SoftRange extends Range {
+        static readFrom(hashParams: URLSearchParams, position: HardRange, initialA: number | null): SoftRange {
             const a = hashParams.has('ss')
                 ? parseNumber(hashParams.get('ss'))
                 : position.min ?? initialA;
@@ -144,7 +144,7 @@
                 ? parseNumber(hashParams.get('to'))
                 : position.max;
 
-            return new LoopRange(a, b);
+            return new SoftRange(a, b);
         }
 
         get a(): number | null { return this.lo; }
@@ -153,7 +153,7 @@
         get b(): number | null { return this.hi; }
         set b(value: number | null) { this.hi = value; }
 
-        normalize(position: PositionRange): void {
+        normalize(position: HardRange): void {
             if (this.a !== null) {
                 this.a = position.clamp(this.a);
             }
@@ -168,7 +168,7 @@
         }
 
         // Shift [a, b] by `seconds`, sliding to stay within `position`.
-        move(seconds: number, position: PositionRange): void {
+        move(seconds: number, position: HardRange): void {
             const length = this.b! - this.a!;
             let nextA = this.a! + seconds;
             let nextB = this.b! + seconds;
@@ -189,21 +189,21 @@
             this.normalize(position);
         }
 
-        startFrom(currentTime: number, seconds: number, position: PositionRange): void {
+        startFrom(currentTime: number, seconds: number, position: HardRange): void {
             this.a = position.clamp(currentTime);
             this.b = position.clamp(this.a! + seconds);
 
             this.normalize(position);
         }
 
-        reset(position: PositionRange): void {
+        reset(position: HardRange): void {
             this.a = position.min;
             this.b = position.max;
 
             this.normalize(position);
         }
 
-        nudgeA(delta: number, position: PositionRange): void {
+        nudgeA(delta: number, position: HardRange): void {
             this.a = position.clamp(this.a! + delta);
 
             if (this.b !== null) {
@@ -211,7 +211,7 @@
             }
         }
 
-        nudgeB(delta: number, position: PositionRange): void {
+        nudgeB(delta: number, position: HardRange): void {
             this.b = position.clamp(this.b! + delta);
 
             if (this.a !== null) {
@@ -228,10 +228,10 @@
         }
     }
 
-    // Coordinates a PositionRange and a LoopRange against the video element and the URL.
-    class ABLoop {
-        position!: PositionRange;
-        loop!: LoopRange;
+    // Coordinates a HardRange and a SoftRange against the video element and the URL.
+    class LoopPlayer {
+        position!: HardRange;
+        loop!: SoftRange;
 
         constructor() {
             this.readLocation();
@@ -250,8 +250,8 @@
             const t = parseInt(url.searchParams.get('t') ?? '', 10);
             const initialA = Number.isFinite(t) ? t : null;
 
-            this.position = PositionRange.readFrom(hashParams);
-            this.loop = LoopRange.readFrom(hashParams, this.position, initialA);
+            this.position = HardRange.readFrom(hashParams);
+            this.loop = SoftRange.readFrom(hashParams, this.position, initialA);
         }
 
         normalizeState(): void {
@@ -430,7 +430,7 @@
         }
     }
 
-    const controller = new ABLoop();
+    const controller = new LoopPlayer();
 
     setInterval(() => controller.tick(), 50);
 
