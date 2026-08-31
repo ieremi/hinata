@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         hinata
 // @namespace    https://github.com/ieremi/hinata
-// @version      2.32
+// @version      2.33
 // @description  YouTube A-B loop
 // @match        https://www.youtube.com/watch*
 // @updateURL    https://raw.githubusercontent.com/ieremi/hinata/main/hinata.user.js
@@ -262,7 +262,7 @@
             this.commit(false);
         }
         // Round all parameters to the nearest integer.
-        roundParameters() {
+        round() {
             this.hardRange.round();
             this.softRange.round();
             this.normalize();
@@ -337,7 +337,7 @@
             }],
         ['2', () => loopPlayer.startFrom(2)],
         ['4', () => loopPlayer.startFrom(4)],
-        ['z', () => loopPlayer.roundParameters()]
+        ['z', () => loopPlayer.round()]
     ]);
     document.addEventListener('keydown', (event) => {
         if (isTyping(event.target)) {
