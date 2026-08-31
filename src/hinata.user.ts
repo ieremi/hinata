@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         hinata
 // @namespace    https://github.com/ieremi/hinata
-// @version      2.38
+// @version      2.39
 // @description  YouTube A-B loop
 // @match        https://www.youtube.com/watch*
 // @updateURL    https://raw.githubusercontent.com/ieremi/hinata/main/hinata.user.js
@@ -115,6 +115,18 @@
             if (this.min !== null && this.max !== null && this.min > this.max) {
                 [this.min, this.max] = [this.max, this.min];
             }
+
+            this.persist();
+        }
+
+        unbind(): void {
+            super.unbind();
+            this.persist();
+        }
+
+        round(): void {
+            super.round();
+            this.persist();
         }
 
         clamp(value: Pos): Pos {
@@ -137,6 +149,8 @@
         adopt(softRange: SoftRange): void {
             this.min = softRange.a;
             this.max = softRange.b;
+
+            this.persist();
         }
 
         writeTo(params: URLSearchParams): void {
@@ -184,6 +198,18 @@
             if (this.a !== null && this.b !== null && this.a > this.b) {
                 this.b = this.a;
             }
+
+            this.persist();
+        }
+
+        unbind(): void {
+            super.unbind();
+            this.persist();
+        }
+
+        round(): void {
+            super.round();
+            this.persist();
         }
 
         // Shift [a, b] by `seconds`, sliding to stay within `hardRange`.
@@ -235,6 +261,8 @@
             if (this.b !== null) {
                 this.a = Math.min(this.a, this.b);
             }
+
+            this.persist();
         }
 
         nudgeB(delta: number, hardRange: HardRange): void {
@@ -243,6 +271,8 @@
             if (this.a !== null) {
                 this.b = Math.max(this.a, this.b);
             }
+
+            this.persist();
         }
 
         writeTo(params: URLSearchParams): void {
@@ -312,8 +342,6 @@
             }
 
             this.seek(this.softRange.a);
-            this.hardRange.persist();
-            this.softRange.persist();
             this.show();
         }
 
@@ -326,8 +354,6 @@
 
             this.softRange.take(video.currentTime, seconds, this.hardRange);
             this.seek(this.softRange.a);
-            this.hardRange.persist();
-            this.softRange.persist();
             this.show();
         }
 
@@ -340,8 +366,6 @@
 
             this.hardRange.adopt(this.softRange);
             this.normalize();
-            this.hardRange.persist();
-            this.softRange.persist();
             this.show();
         }
 
@@ -352,8 +376,6 @@
 
             this.softRange.nudgeA(delta, this.hardRange);
             this.seek(this.softRange.a);
-            this.hardRange.persist();
-            this.softRange.persist();
             this.show();
         }
 
@@ -363,8 +385,6 @@
             }
 
             this.softRange.nudgeB(delta, this.hardRange);
-            this.hardRange.persist();
-            this.softRange.persist();
             this.show();
         }
 
@@ -407,8 +427,6 @@
 
             this.normalize();
             this.seek(this.softRange.a);
-            this.hardRange.persist();
-            this.softRange.persist();
             this.show();
         }
     }
@@ -429,13 +447,11 @@
         ['p', () => {
             loopPlayer.softRange.initialize(loopPlayer.hardRange);
             loopPlayer.seek(loopPlayer.softRange.a);
-            loopPlayer.hardRange.persist();
-            loopPlayer.softRange.persist();
             loopPlayer.show();
         }],
         ['P', () => loopPlayer.setHardRange()],
-        ['l', () => { loopPlayer.softRange.unbind(); loopPlayer.softRange.persist(); loopPlayer.show(); }],
-        ['L', () => { loopPlayer.hardRange.unbind(); loopPlayer.hardRange.persist(); loopPlayer.show(); }],
+        ['l', () => { loopPlayer.softRange.unbind(); loopPlayer.show(); }],
+        ['L', () => { loopPlayer.hardRange.unbind(); loopPlayer.show(); }],
         ['s', () => { loopPlayer.seek(loopPlayer.softRange.a); loopPlayer.show(); }],
         ['S', () => {
             const b = loopPlayer.softRange.b;
@@ -448,8 +464,6 @@
             loopPlayer.hardRange.round();
             loopPlayer.softRange.round();
             loopPlayer.normalize();
-            loopPlayer.hardRange.persist();
-            loopPlayer.softRange.persist();
             loopPlayer.show();
         }]
     ]);
