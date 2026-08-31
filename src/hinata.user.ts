@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         hinata
 // @namespace    https://github.com/ieremi/hinata
-// @version      2.27
+// @version      2.29
 // @description  YouTube A-B loop
 // @match        https://www.youtube.com/watch*
 // @updateURL    https://raw.githubusercontent.com/ieremi/hinata/main/hinata.user.js
@@ -278,32 +278,25 @@
 
         // Every mutating command below ends the same way: optionally re-seek to
         // A, then persist the new state to the URL and log it.
-        private commit(seek: boolean): void {
-            if (seek) {
-                this.seekA();
+        private commit(seekToA: boolean): void {
+            if (seekToA) {
+                this.seek(this.softRange.a);
             }
 
             this.updateUrl();
             this.show();
         }
 
-        seek(position: number): void {
+        // Seek to `position`, clamped to the hard range. No-op if null.
+        seek(position: number | null): void {
+            if (position === null || !Number.isFinite(position)) {
+                return;
+            }
+
             const video = getVideo();
 
-            if (video && Number.isFinite(position)) {
+            if (video) {
                 video.currentTime = this.hardRange.clamp(position);
-            }
-        }
-
-        seekA(): void {
-            if (this.softRange.a !== null) {
-                this.seek(this.softRange.a);
-            }
-        }
-
-        seekB(): void {
-            if (this.softRange.b !== null) {
-                this.seek(this.softRange.b - 2);
             }
         }
 
@@ -443,8 +436,12 @@
         ['P', () => loopPlayer.setHardRange()],
         ['l', () => loopPlayer.unbindLoop()],
         ['L', () => loopPlayer.unbindHardRange()],
-        ['s', () => { loopPlayer.seekA(); loopPlayer.show(); }],
-        ['S', () => { loopPlayer.seekB(); loopPlayer.show(); }],
+        ['s', () => { loopPlayer.seek(loopPlayer.softRange.a); loopPlayer.show(); }],
+        ['S', () => {
+            const b = loopPlayer.softRange.b;
+            loopPlayer.seek(b === null ? null : b - 2);
+            loopPlayer.show();
+        }],
         ['2', () => loopPlayer.startFrom(2)],
         ['4', () => loopPlayer.startFrom(4)],
         ['z', () => loopPlayer.roundParameters()]
