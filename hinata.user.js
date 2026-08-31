@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         hinata
 // @namespace    https://github.com/ieremi/hinata
-// @version      2.22
+// @version      2.23
 // @description  YouTube A-B loop
 // @match        https://www.youtube.com/watch*
 // @updateURL    https://raw.githubusercontent.com/ieremi/hinata/main/hinata.user.js
@@ -94,9 +94,9 @@
             return value;
         }
         // Adopt the current loop range as the new position range.
-        adopt(loop) {
-            this.min = loop.a;
-            this.max = loop.b;
+        adopt(softRange) {
+            this.min = softRange.a;
+            this.max = softRange.b;
         }
         writeTo(params) {
             super.writeTo(params, 'min', 'max');
@@ -194,23 +194,23 @@
             const t = parseInt(url.searchParams.get('t') ?? '', 10);
             const initialA = Number.isFinite(t) ? t : null;
             this.hardRange = HardRange.readFrom(hashParams);
-            this.loop = SoftRange.readFrom(hashParams, this.hardRange, initialA);
+            this.softRange = SoftRange.readFrom(hashParams, this.hardRange, initialA);
         }
         normalizeState() {
             this.hardRange.normalize();
-            this.loop.normalize(this.hardRange);
+            this.softRange.normalize(this.hardRange);
         }
         updateUrl() {
             const url = new URL(location.href);
             const params = new URLSearchParams(url.hash.slice(1));
             this.hardRange.writeTo(params);
-            this.loop.writeTo(params);
+            this.softRange.writeTo(params);
             const hash = params.toString();
             url.hash = hash || '';
             history.replaceState(null, '', url);
         }
         show() {
-            console.log(`[AB LOOP] ${this.hardRange.format()} ${this.loop.format()}`);
+            console.log(`[AB LOOP] ${this.hardRange.format()} ${this.softRange.format()}`);
         }
         seek(position) {
             const video = getVideo();
@@ -219,20 +219,20 @@
             }
         }
         seekA() {
-            if (this.loop.a !== null) {
-                this.seek(this.loop.a);
+            if (this.softRange.a !== null) {
+                this.seek(this.softRange.a);
             }
         }
         seekB() {
-            if (this.loop.b !== null) {
-                this.seek(this.loop.b - 2);
+            if (this.softRange.b !== null) {
+                this.seek(this.softRange.b - 2);
             }
         }
         moveLoop(seconds) {
-            if (this.loop.a === null || this.loop.b === null) {
+            if (this.softRange.a === null || this.softRange.b === null) {
                 return;
             }
-            this.loop.move(seconds, this.hardRange);
+            this.softRange.move(seconds, this.hardRange);
             this.seekA();
             this.updateUrl();
             this.show();
@@ -242,32 +242,32 @@
             if (!video) {
                 return;
             }
-            this.loop.startFrom(video.currentTime, seconds, this.hardRange);
+            this.softRange.startFrom(video.currentTime, seconds, this.hardRange);
             this.seekA();
             this.updateUrl();
             this.show();
         }
         // Reset [a, b] to [min, max].
         initialize() {
-            this.loop.initialize(this.hardRange);
+            this.softRange.initialize(this.hardRange);
             this.seekA();
             this.updateUrl();
             this.show();
         }
         // Set the position range to the current loop range.
         setHardRange() {
-            if (this.loop.a === null || this.loop.b === null) {
+            if (this.softRange.a === null || this.softRange.b === null) {
                 console.log('[AB LOOP] A and B are not set');
                 return;
             }
-            this.hardRange.adopt(this.loop);
+            this.hardRange.adopt(this.softRange);
             this.normalizeState();
             this.updateUrl();
             this.show();
         }
         // Unbind the A-B loop.
         unbindLoop() {
-            this.loop.unbind();
+            this.softRange.unbind();
             this.updateUrl();
             this.show();
         }
@@ -280,25 +280,25 @@
         // Round all parameters to the nearest integer.
         roundParameters() {
             this.hardRange.round();
-            this.loop.round();
+            this.softRange.round();
             this.normalizeState();
             this.updateUrl();
             this.show();
         }
         nudgeA(delta) {
-            if (this.loop.a === null) {
+            if (this.softRange.a === null) {
                 return;
             }
-            this.loop.nudgeA(delta, this.hardRange);
+            this.softRange.nudgeA(delta, this.hardRange);
             this.seekA();
             this.updateUrl();
             this.show();
         }
         nudgeB(delta) {
-            if (this.loop.b === null) {
+            if (this.softRange.b === null) {
                 return;
             }
-            this.loop.nudgeB(delta, this.hardRange);
+            this.softRange.nudgeB(delta, this.hardRange);
             this.updateUrl();
             this.show();
         }
@@ -308,10 +308,10 @@
                 return;
             }
             // Give the A-B loop priority over the position range.
-            if (this.loop.a !== null &&
-                this.loop.b !== null &&
-                video.currentTime >= this.loop.b) {
-                video.currentTime = this.loop.a;
+            if (this.softRange.a !== null &&
+                this.softRange.b !== null &&
+                video.currentTime >= this.softRange.b) {
+                video.currentTime = this.softRange.a;
                 return;
             }
             // Keep the playback position within [min, max].
