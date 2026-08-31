@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         hinata
 // @namespace    https://github.com/ieremi/hinata
-// @version      2.33
+// @version      2.34
 // @description  YouTube A-B loop
 // @match        https://www.youtube.com/watch*
 // @updateURL    https://raw.githubusercontent.com/ieremi/hinata/main/hinata.user.js
@@ -189,7 +189,7 @@
             this.normalize(hardRange);
         }
 
-        startFrom(currentTime: number, seconds: number, hardRange: HardRange): void {
+        take(currentTime: number, seconds: number, hardRange: HardRange): void {
             this.a = hardRange.clamp(currentTime);
             this.b = hardRange.clamp(this.a! + seconds);
 
@@ -309,14 +309,14 @@
             this.commit(true);
         }
 
-        startFrom(seconds: number): void {
+        take(seconds: number): void {
             const video = getVideo();
 
             if (!video) {
                 return;
             }
 
-            this.softRange.startFrom(video.currentTime, seconds, this.hardRange);
+            this.softRange.take(video.currentTime, seconds, this.hardRange);
             this.commit(true);
         }
 
@@ -430,8 +430,8 @@
             loopPlayer.seek(b === null ? null : b - 2);
             loopPlayer.show();
         }],
-        ['2', () => loopPlayer.startFrom(2)],
-        ['4', () => loopPlayer.startFrom(4)],
+        ['2', () => loopPlayer.take(2)],
+        ['4', () => loopPlayer.take(4)],
         ['z', () => loopPlayer.round()]
     ]);
 

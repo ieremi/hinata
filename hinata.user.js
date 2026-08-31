@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         hinata
 // @namespace    https://github.com/ieremi/hinata
-// @version      2.33
+// @version      2.34
 // @description  YouTube A-B loop
 // @match        https://www.youtube.com/watch*
 // @updateURL    https://raw.githubusercontent.com/ieremi/hinata/main/hinata.user.js
@@ -148,7 +148,7 @@
             this.b = hardRange.clamp(nextB);
             this.normalize(hardRange);
         }
-        startFrom(currentTime, seconds, hardRange) {
+        take(currentTime, seconds, hardRange) {
             this.a = hardRange.clamp(currentTime);
             this.b = hardRange.clamp(this.a + seconds);
             this.normalize(hardRange);
@@ -238,12 +238,12 @@
             this.softRange.move(seconds, this.hardRange);
             this.commit(true);
         }
-        startFrom(seconds) {
+        take(seconds) {
             const video = getVideo();
             if (!video) {
                 return;
             }
-            this.softRange.startFrom(video.currentTime, seconds, this.hardRange);
+            this.softRange.take(video.currentTime, seconds, this.hardRange);
             this.commit(true);
         }
         // Reset [a, b] to [min, max].
@@ -251,7 +251,7 @@
             this.softRange.initialize(this.hardRange);
             this.commit(true);
         }
-        // Set the position range to the current loop range.
+        // Set the hard range to the current loop range.
         setHardRange() {
             if (this.softRange.a === null || this.softRange.b === null) {
                 console.log('[AB LOOP] A and B are not set');
@@ -335,8 +335,8 @@
                 loopPlayer.seek(b === null ? null : b - 2);
                 loopPlayer.show();
             }],
-        ['2', () => loopPlayer.startFrom(2)],
-        ['4', () => loopPlayer.startFrom(4)],
+        ['2', () => loopPlayer.take(2)],
+        ['4', () => loopPlayer.take(4)],
         ['z', () => loopPlayer.round()]
     ]);
     document.addEventListener('keydown', (event) => {
