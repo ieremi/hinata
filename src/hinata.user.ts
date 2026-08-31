@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         hinata
 // @namespace    https://github.com/ieremi/hinata
-// @version      2.20
+// @version      2.22
 // @description  YouTube A-B loop
 // @match        https://www.youtube.com/watch*
 // @updateURL    https://raw.githubusercontent.com/ieremi/hinata/main/hinata.user.js
@@ -196,7 +196,7 @@
             this.normalize(hardRange);
         }
 
-        reset(hardRange: HardRange): void {
+        initialize(hardRange: HardRange): void {
             this.a = hardRange.min;
             this.b = hardRange.max;
 
@@ -321,8 +321,8 @@
         }
 
         // Reset [a, b] to [min, max].
-        initializeLoop(): void {
-            this.loop.reset(this.hardRange);
+        initialize(): void {
+            this.loop.initialize(this.hardRange);
             this.seekA();
             this.updateUrl();
             this.show();
@@ -443,7 +443,7 @@
         ['C', () => controller.moveLoop(4)],
         ['g', () => controller.moveLoop(-2)],
         ['G', () => controller.moveLoop(-4)],
-        ['p', () => controller.initializeLoop()],
+        ['p', () => controller.initialize()],
         ['P', () => controller.setHardRange()],
         ['l', () => controller.unbindLoop()],
         ['L', () => controller.unbindHardRange()],
