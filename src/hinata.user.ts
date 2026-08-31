@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         hinata
 // @namespace    https://github.com/ieremi/hinata
-// @version      2.36
+// @version      2.38
 // @description  YouTube A-B loop
 // @match        https://www.youtube.com/watch*
 // @updateURL    https://raw.githubusercontent.com/ieremi/hinata/main/hinata.user.js
@@ -45,13 +45,16 @@
         );
     }
 
+    // A point in time within the video, in seconds.
+    type Pos = number;
+
     // A pair of nullable bounds, stored generically as [lo, hi].
     // Subclasses expose their own semantic names on top of lo/hi.
     class Range {
-        lo: number | null;
-        hi: number | null;
+        lo: Pos | null;
+        hi: Pos | null;
 
-        constructor(lo: number | null, hi: number | null) {
+        constructor(lo: Pos | null, hi: Pos | null) {
             this.lo = lo;
             this.hi = hi;
         }
@@ -74,6 +77,18 @@
         format(loLabel: string, hiLabel: string): string {
             return `${loLabel}=${format(this.lo)} ${hiLabel}=${format(this.hi)}`;
         }
+
+        // Persist lo/hi into the URL hash under loName/hiName.
+        persist(loName: string, hiName: string): void {
+            const url = new URL(location.href);
+            const params = new URLSearchParams(url.hash.slice(1));
+
+            setOrDelete(params, loName, this.lo);
+            setOrDelete(params, hiName, this.hi);
+
+            url.hash = params.toString() || '';
+            history.replaceState(null, '', url);
+        }
     }
 
     // The allowed playback range: [min, max].
@@ -90,11 +105,11 @@
             return new HardRange(min, max);
         }
 
-        get min(): number | null { return this.lo; }
-        set min(value: number | null) { this.lo = value; }
+        get min(): Pos | null { return this.lo; }
+        set min(value: Pos | null) { this.lo = value; }
 
-        get max(): number | null { return this.hi; }
-        set max(value: number | null) { this.hi = value; }
+        get max(): Pos | null { return this.hi; }
+        set max(value: Pos | null) { this.hi = value; }
 
         normalize(): void {
             if (this.min !== null && this.max !== null && this.min > this.max) {
@@ -102,7 +117,7 @@
             }
         }
 
-        clamp(value: number): number {
+        clamp(value: Pos): Pos {
             if (!Number.isFinite(value)) {
                 return value;
             }
@@ -131,11 +146,15 @@
         format(): string {
             return super.format('min', 'max');
         }
+
+        persist(): void {
+            super.persist('min', 'max');
+        }
     }
 
     // The A-B loop: [a, b]. Always kept within its HardRange.
     class SoftRange extends Range {
-        static readFrom(hashParams: URLSearchParams, hardRange: HardRange, initialA: number | null): SoftRange {
+        static readFrom(hashParams: URLSearchParams, hardRange: HardRange, initialA: Pos | null): SoftRange {
             const a = hashParams.has('a')
                 ? parseNumber(hashParams.get('a'))
                 : hardRange.min ?? initialA;
@@ -147,11 +166,11 @@
             return new SoftRange(a, b);
         }
 
-        get a(): number | null { return this.lo; }
-        set a(value: number | null) { this.lo = value; }
+        get a(): Pos | null { return this.lo; }
+        set a(value: Pos | null) { this.lo = value; }
 
-        get b(): number | null { return this.hi; }
-        set b(value: number | null) { this.hi = value; }
+        get b(): Pos | null { return this.hi; }
+        set b(value: Pos | null) { this.hi = value; }
 
         normalize(hardRange: HardRange): void {
             if (this.a !== null) {
@@ -168,10 +187,15 @@
         }
 
         // Shift [a, b] by `seconds`, sliding to stay within `hardRange`.
-        move(seconds: number, hardRange: HardRange): void {
-            const length = this.b! - this.a!;
-            let nextA = this.a! + seconds;
-            let nextB = this.b! + seconds;
+        // Returns false (no-op) if the loop isn't set.
+        move(seconds: number, hardRange: HardRange): boolean {
+            if (this.a === null || this.b === null) {
+                return false;
+            }
+
+            const length = this.b - this.a;
+            let nextA = this.a + seconds;
+            let nextB = this.b + seconds;
 
             if (hardRange.min !== null && nextA < hardRange.min) {
                 nextA = hardRange.min;
@@ -187,9 +211,11 @@
             this.b = hardRange.clamp(nextB);
 
             this.normalize(hardRange);
+
+            return true;
         }
 
-        take(currentTime: number, seconds: number, hardRange: HardRange): void {
+        take(currentTime: Pos, seconds: number, hardRange: HardRange): void {
             this.a = hardRange.clamp(currentTime);
             this.b = hardRange.clamp(this.a! + seconds);
 
@@ -226,6 +252,10 @@
         format(): string {
             return super.format('A', 'B');
         }
+
+        persist(): void {
+            super.persist('a', 'b');
+        }
     }
 
     // Coordinates a HardRange and a SoftRange against the video element and the URL.
@@ -259,36 +289,12 @@
             this.softRange.normalize(this.hardRange);
         }
 
-        updateUrl(): void {
-            const url = new URL(location.href);
-            const params = new URLSearchParams(url.hash.slice(1));
-
-            this.hardRange.writeTo(params);
-            this.softRange.writeTo(params);
-
-            const hash = params.toString();
-            url.hash = hash || '';
-
-            history.replaceState(null, '', url);
-        }
-
         show(): void {
             console.log(`[AB LOOP] ${this.hardRange.format()} ${this.softRange.format()}`);
         }
 
-        // Every mutating command below ends the same way: optionally re-seek to
-        // A, then persist the new state to the URL and log it.
-        private commit(seekToA: boolean): void {
-            if (seekToA) {
-                this.seek(this.softRange.a);
-            }
-
-            this.updateUrl();
-            this.show();
-        }
-
         // Seek to `position`, clamped to the hard range. No-op if null.
-        seek(position: number | null): void {
+        seek(position: Pos | null): void {
             if (position === null || !Number.isFinite(position)) {
                 return;
             }
@@ -301,12 +307,14 @@
         }
 
         move(seconds: number): void {
-            if (this.softRange.a === null || this.softRange.b === null) {
+            if (!this.softRange.move(seconds, this.hardRange)) {
                 return;
             }
 
-            this.softRange.move(seconds, this.hardRange);
-            this.commit(true);
+            this.seek(this.softRange.a);
+            this.hardRange.persist();
+            this.softRange.persist();
+            this.show();
         }
 
         take(seconds: number): void {
@@ -317,7 +325,10 @@
             }
 
             this.softRange.take(video.currentTime, seconds, this.hardRange);
-            this.commit(true);
+            this.seek(this.softRange.a);
+            this.hardRange.persist();
+            this.softRange.persist();
+            this.show();
         }
 
         // Set the hard range to the current loop range.
@@ -329,7 +340,9 @@
 
             this.hardRange.adopt(this.softRange);
             this.normalize();
-            this.commit(false);
+            this.hardRange.persist();
+            this.softRange.persist();
+            this.show();
         }
 
         nudgeA(delta: number): void {
@@ -338,7 +351,10 @@
             }
 
             this.softRange.nudgeA(delta, this.hardRange);
-            this.commit(true);
+            this.seek(this.softRange.a);
+            this.hardRange.persist();
+            this.softRange.persist();
+            this.show();
         }
 
         nudgeB(delta: number): void {
@@ -347,7 +363,9 @@
             }
 
             this.softRange.nudgeB(delta, this.hardRange);
-            this.commit(false);
+            this.hardRange.persist();
+            this.softRange.persist();
+            this.show();
         }
 
         tick(): void {
@@ -388,7 +406,10 @@
             }
 
             this.normalize();
-            this.commit(true);
+            this.seek(this.softRange.a);
+            this.hardRange.persist();
+            this.softRange.persist();
+            this.show();
         }
     }
 
@@ -408,12 +429,13 @@
         ['p', () => {
             loopPlayer.softRange.initialize(loopPlayer.hardRange);
             loopPlayer.seek(loopPlayer.softRange.a);
-            loopPlayer.updateUrl();
+            loopPlayer.hardRange.persist();
+            loopPlayer.softRange.persist();
             loopPlayer.show();
         }],
         ['P', () => loopPlayer.setHardRange()],
-        ['l', () => { loopPlayer.softRange.unbind(); loopPlayer.updateUrl(); loopPlayer.show(); }],
-        ['L', () => { loopPlayer.hardRange.unbind(); loopPlayer.updateUrl(); loopPlayer.show(); }],
+        ['l', () => { loopPlayer.softRange.unbind(); loopPlayer.softRange.persist(); loopPlayer.show(); }],
+        ['L', () => { loopPlayer.hardRange.unbind(); loopPlayer.hardRange.persist(); loopPlayer.show(); }],
         ['s', () => { loopPlayer.seek(loopPlayer.softRange.a); loopPlayer.show(); }],
         ['S', () => {
             const b = loopPlayer.softRange.b;
@@ -426,7 +448,8 @@
             loopPlayer.hardRange.round();
             loopPlayer.softRange.round();
             loopPlayer.normalize();
-            loopPlayer.updateUrl();
+            loopPlayer.hardRange.persist();
+            loopPlayer.softRange.persist();
             loopPlayer.show();
         }]
     ]);

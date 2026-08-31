@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         hinata
 // @namespace    https://github.com/ieremi/hinata
-// @version      2.36
+// @version      2.38
 // @description  YouTube A-B loop
 // @match        https://www.youtube.com/watch*
 // @updateURL    https://raw.githubusercontent.com/ieremi/hinata/main/hinata.user.js
@@ -60,6 +60,15 @@
         format(loLabel, hiLabel) {
             return `${loLabel}=${format(this.lo)} ${hiLabel}=${format(this.hi)}`;
         }
+        // Persist lo/hi into the URL hash under loName/hiName.
+        persist(loName, hiName) {
+            const url = new URL(location.href);
+            const params = new URLSearchParams(url.hash.slice(1));
+            setOrDelete(params, loName, this.lo);
+            setOrDelete(params, hiName, this.hi);
+            url.hash = params.toString() || '';
+            history.replaceState(null, '', url);
+        }
     }
     // The allowed playback range: [min, max].
     class HardRange extends Range {
@@ -104,6 +113,9 @@
         format() {
             return super.format('min', 'max');
         }
+        persist() {
+            super.persist('min', 'max');
+        }
     }
     // The A-B loop: [a, b]. Always kept within its HardRange.
     class SoftRange extends Range {
@@ -132,7 +144,11 @@
             }
         }
         // Shift [a, b] by `seconds`, sliding to stay within `hardRange`.
+        // Returns false (no-op) if the loop isn't set.
         move(seconds, hardRange) {
+            if (this.a === null || this.b === null) {
+                return false;
+            }
             const length = this.b - this.a;
             let nextA = this.a + seconds;
             let nextB = this.b + seconds;
@@ -147,6 +163,7 @@
             this.a = hardRange.clamp(nextA);
             this.b = hardRange.clamp(nextB);
             this.normalize(hardRange);
+            return true;
         }
         take(currentTime, seconds, hardRange) {
             this.a = hardRange.clamp(currentTime);
@@ -176,6 +193,9 @@
         format() {
             return super.format('A', 'B');
         }
+        persist() {
+            super.persist('a', 'b');
+        }
     }
     // Coordinates a HardRange and a SoftRange against the video element and the URL.
     class LoopPlayer {
@@ -200,26 +220,8 @@
             this.hardRange.normalize();
             this.softRange.normalize(this.hardRange);
         }
-        updateUrl() {
-            const url = new URL(location.href);
-            const params = new URLSearchParams(url.hash.slice(1));
-            this.hardRange.writeTo(params);
-            this.softRange.writeTo(params);
-            const hash = params.toString();
-            url.hash = hash || '';
-            history.replaceState(null, '', url);
-        }
         show() {
             console.log(`[AB LOOP] ${this.hardRange.format()} ${this.softRange.format()}`);
-        }
-        // Every mutating command below ends the same way: optionally re-seek to
-        // A, then persist the new state to the URL and log it.
-        commit(seekToA) {
-            if (seekToA) {
-                this.seek(this.softRange.a);
-            }
-            this.updateUrl();
-            this.show();
         }
         // Seek to `position`, clamped to the hard range. No-op if null.
         seek(position) {
@@ -232,11 +234,13 @@
             }
         }
         move(seconds) {
-            if (this.softRange.a === null || this.softRange.b === null) {
+            if (!this.softRange.move(seconds, this.hardRange)) {
                 return;
             }
-            this.softRange.move(seconds, this.hardRange);
-            this.commit(true);
+            this.seek(this.softRange.a);
+            this.hardRange.persist();
+            this.softRange.persist();
+            this.show();
         }
         take(seconds) {
             const video = getVideo();
@@ -244,7 +248,10 @@
                 return;
             }
             this.softRange.take(video.currentTime, seconds, this.hardRange);
-            this.commit(true);
+            this.seek(this.softRange.a);
+            this.hardRange.persist();
+            this.softRange.persist();
+            this.show();
         }
         // Set the hard range to the current loop range.
         setHardRange() {
@@ -254,21 +261,28 @@
             }
             this.hardRange.adopt(this.softRange);
             this.normalize();
-            this.commit(false);
+            this.hardRange.persist();
+            this.softRange.persist();
+            this.show();
         }
         nudgeA(delta) {
             if (this.softRange.a === null) {
                 return;
             }
             this.softRange.nudgeA(delta, this.hardRange);
-            this.commit(true);
+            this.seek(this.softRange.a);
+            this.hardRange.persist();
+            this.softRange.persist();
+            this.show();
         }
         nudgeB(delta) {
             if (this.softRange.b === null) {
                 return;
             }
             this.softRange.nudgeB(delta, this.hardRange);
-            this.commit(false);
+            this.hardRange.persist();
+            this.softRange.persist();
+            this.show();
         }
         tick() {
             const video = getVideo();
@@ -299,7 +313,10 @@
                 return;
             }
             this.normalize();
-            this.commit(true);
+            this.seek(this.softRange.a);
+            this.hardRange.persist();
+            this.softRange.persist();
+            this.show();
         }
     }
     const loopPlayer = new LoopPlayer();
@@ -316,12 +333,13 @@
         ['p', () => {
                 loopPlayer.softRange.initialize(loopPlayer.hardRange);
                 loopPlayer.seek(loopPlayer.softRange.a);
-                loopPlayer.updateUrl();
+                loopPlayer.hardRange.persist();
+                loopPlayer.softRange.persist();
                 loopPlayer.show();
             }],
         ['P', () => loopPlayer.setHardRange()],
-        ['l', () => { loopPlayer.softRange.unbind(); loopPlayer.updateUrl(); loopPlayer.show(); }],
-        ['L', () => { loopPlayer.hardRange.unbind(); loopPlayer.updateUrl(); loopPlayer.show(); }],
+        ['l', () => { loopPlayer.softRange.unbind(); loopPlayer.softRange.persist(); loopPlayer.show(); }],
+        ['L', () => { loopPlayer.hardRange.unbind(); loopPlayer.hardRange.persist(); loopPlayer.show(); }],
         ['s', () => { loopPlayer.seek(loopPlayer.softRange.a); loopPlayer.show(); }],
         ['S', () => {
                 const b = loopPlayer.softRange.b;
@@ -334,7 +352,8 @@
                 loopPlayer.hardRange.round();
                 loopPlayer.softRange.round();
                 loopPlayer.normalize();
-                loopPlayer.updateUrl();
+                loopPlayer.hardRange.persist();
+                loopPlayer.softRange.persist();
                 loopPlayer.show();
             }]
     ]);
