@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         hinata
 // @namespace    https://github.com/ieremi/hinata
-// @version      2.30
+// @version      2.31
 // @description  YouTube A-B loop
 // @match        https://www.youtube.com/watch*
 // @updateURL    https://raw.githubusercontent.com/ieremi/hinata/main/hinata.user.js
@@ -261,16 +261,6 @@
             this.normalizeState();
             this.commit(false);
         }
-        // Unbind the A-B loop.
-        unbindLoop() {
-            this.softRange.unbind();
-            this.commit(false);
-        }
-        // Unbind the playback position range.
-        unbindHardRange() {
-            this.hardRange.unbind();
-            this.commit(false);
-        }
         // Round all parameters to the nearest integer.
         roundParameters() {
             this.hardRange.round();
@@ -337,8 +327,8 @@
         ['G', () => loopPlayer.move(-4)],
         ['p', () => loopPlayer.initialize()],
         ['P', () => loopPlayer.setHardRange()],
-        ['l', () => loopPlayer.unbindLoop()],
-        ['L', () => loopPlayer.unbindHardRange()],
+        ['l', () => { loopPlayer.softRange.unbind(); loopPlayer.updateUrl(); loopPlayer.show(); }],
+        ['L', () => { loopPlayer.hardRange.unbind(); loopPlayer.updateUrl(); loopPlayer.show(); }],
         ['s', () => { loopPlayer.seek(loopPlayer.softRange.a); loopPlayer.show(); }],
         ['S', () => {
                 const b = loopPlayer.softRange.b;
