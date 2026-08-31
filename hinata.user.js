@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         hinata
 // @namespace    https://github.com/ieremi/hinata
-// @version      2.18
+// @version      2.19
 // @description  YouTube A-B loop
 // @match        https://www.youtube.com/watch*
 // @updateURL    https://raw.githubusercontent.com/ieremi/hinata/main/hinata.user.js
@@ -255,7 +255,7 @@
             this.show();
         }
         // Set the position range to the current loop range.
-        setPositionRange() {
+        setHardRange() {
             if (this.loop.a === null || this.loop.b === null) {
                 console.log('[AB LOOP] A and B are not set');
                 return;
@@ -272,7 +272,7 @@
             this.show();
         }
         // Unbind the playback position range.
-        unbindPositionRange() {
+        unbindHardRange() {
             this.position.unbind();
             this.updateUrl();
             this.show();
@@ -348,9 +348,9 @@
         ['g', () => controller.moveLoop(-2)],
         ['G', () => controller.moveLoop(-4)],
         ['p', () => controller.initializeLoop()],
-        ['P', () => controller.setPositionRange()],
+        ['P', () => controller.setHardRange()],
         ['l', () => controller.unbindLoop()],
-        ['L', () => controller.unbindPositionRange()],
+        ['L', () => controller.unbindHardRange()],
         ['s', () => { controller.seekA(); controller.show(); }],
         ['S', () => { controller.seekB(); controller.show(); }],
         ['2', () => controller.setLoop(2)],
