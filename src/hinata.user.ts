@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         hinata
 // @namespace    https://github.com/ieremi/hinata
-// @version      2.26
+// @version      2.27
 // @description  YouTube A-B loop
 // @match        https://www.youtube.com/watch*
 // @updateURL    https://raw.githubusercontent.com/ieremi/hinata/main/hinata.user.js
@@ -276,6 +276,17 @@
             console.log(`[AB LOOP] ${this.hardRange.format()} ${this.softRange.format()}`);
         }
 
+        // Every mutating command below ends the same way: optionally re-seek to
+        // A, then persist the new state to the URL and log it.
+        private commit(seek: boolean): void {
+            if (seek) {
+                this.seekA();
+            }
+
+            this.updateUrl();
+            this.show();
+        }
+
         seek(position: number): void {
             const video = getVideo();
 
@@ -302,9 +313,7 @@
             }
 
             this.softRange.move(seconds, this.hardRange);
-            this.seekA();
-            this.updateUrl();
-            this.show();
+            this.commit(true);
         }
 
         startFrom(seconds: number): void {
@@ -315,17 +324,13 @@
             }
 
             this.softRange.startFrom(video.currentTime, seconds, this.hardRange);
-            this.seekA();
-            this.updateUrl();
-            this.show();
+            this.commit(true);
         }
 
         // Reset [a, b] to [min, max].
         initialize(): void {
             this.softRange.initialize(this.hardRange);
-            this.seekA();
-            this.updateUrl();
-            this.show();
+            this.commit(true);
         }
 
         // Set the position range to the current loop range.
@@ -337,22 +342,19 @@
 
             this.hardRange.adopt(this.softRange);
             this.normalizeState();
-            this.updateUrl();
-            this.show();
+            this.commit(false);
         }
 
         // Unbind the A-B loop.
         unbindLoop(): void {
             this.softRange.unbind();
-            this.updateUrl();
-            this.show();
+            this.commit(false);
         }
 
         // Unbind the playback position range.
         unbindHardRange(): void {
             this.hardRange.unbind();
-            this.updateUrl();
-            this.show();
+            this.commit(false);
         }
 
         // Round all parameters to the nearest integer.
@@ -361,8 +363,7 @@
             this.softRange.round();
 
             this.normalizeState();
-            this.updateUrl();
-            this.show();
+            this.commit(false);
         }
 
         nudgeA(delta: number): void {
@@ -371,9 +372,7 @@
             }
 
             this.softRange.nudgeA(delta, this.hardRange);
-            this.seekA();
-            this.updateUrl();
-            this.show();
+            this.commit(true);
         }
 
         nudgeB(delta: number): void {
@@ -382,8 +381,7 @@
             }
 
             this.softRange.nudgeB(delta, this.hardRange);
-            this.updateUrl();
-            this.show();
+            this.commit(false);
         }
 
         tick(): void {
@@ -424,9 +422,7 @@
             }
 
             this.normalizeState();
-            this.seekA();
-            this.updateUrl();
-            this.show();
+            this.commit(true);
         }
     }
 
