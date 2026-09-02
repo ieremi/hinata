@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         hinata
 // @namespace    https://github.com/ieremi/hinata
-// @version      2.45
+// @version      2.46
 // @description  YouTube A-B loop
 // @match        https://www.youtube.com/watch*
 // @updateURL    https://raw.githubusercontent.com/ieremi/hinata/main/hinata.user.js
@@ -326,8 +326,12 @@
             const hashParams = new URLSearchParams(url.hash.slice(1));
 
             url.searchParams.delete('t');
-            hashParams.delete('a');
-            hashParams.delete('b');
+
+            for (const name of [...hashParams.keys()]) {
+                if (name !== 'min' && name !== 'max') {
+                    hashParams.delete(name);
+                }
+            }
 
             url.hash = hashParams.toString() || '';
 
