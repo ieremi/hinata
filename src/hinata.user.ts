@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         hinata
 // @namespace    https://github.com/ieremi/hinata
-// @version      2.42
+// @version      2.44
 // @description  YouTube A-B loop
 // @match        https://www.youtube.com/watch*
 // @updateURL    https://raw.githubusercontent.com/ieremi/hinata/main/hinata.user.js
@@ -318,6 +318,26 @@
             console.log(`[AB LOOP] ${this.hardRange.format()} ${this.softRange.format()}`);
         }
 
+        // Build the current URL with ?t and #a/#b stripped, for sharing
+        // a clean link without this script's own bookmarked state.
+        clean(): string {
+            const url = new URL(location.href);
+            const hashParams = new URLSearchParams(url.hash.slice(1));
+
+            url.searchParams.delete('t');
+            hashParams.delete('a');
+            hashParams.delete('b');
+
+            url.hash = hashParams.toString() || '';
+
+            return url.toString();
+        }
+
+        copy(text: string): void {
+            navigator.clipboard.writeText(text)
+                .catch(() => console.log('[AB LOOP] failed to copy URL to clipboard'));
+        }
+
         // Seek to `position`, clamped to the hard range. No-op if null.
         seek(position: Pos | null): void {
             if (position === null || !Number.isFinite(position)) {
@@ -447,7 +467,8 @@
             loopPlayer.softRange.round();
             loopPlayer.normalize();
         }],
-        ['d', () => loopPlayer.show()]
+        ['d', () => loopPlayer.show()],
+        [',', () => loopPlayer.copy(loopPlayer.clean())]
     ]);
 
     document.addEventListener('keydown', (event: KeyboardEvent) => {
