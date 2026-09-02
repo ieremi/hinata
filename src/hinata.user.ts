@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         hinata
 // @namespace    https://github.com/ieremi/hinata
-// @version      2.44
+// @version      2.45
 // @description  YouTube A-B loop
 // @match        https://www.youtube.com/watch*
 // @updateURL    https://raw.githubusercontent.com/ieremi/hinata/main/hinata.user.js
@@ -245,6 +245,7 @@
             this.b = hardRange.clamp(this.a! + seconds);
 
             this.normalize(hardRange);
+            this.round();
         }
 
         initialize(hardRange: HardRange): void {
