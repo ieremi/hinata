@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         hinata
 // @namespace    https://github.com/ieremi/hinata
-// @version      2.46
+// @version      2.47
 // @description  YouTube A-B loop
 // @match        https://www.youtube.com/watch*
 // @updateURL    https://raw.githubusercontent.com/ieremi/hinata/main/hinata.user.js
@@ -243,6 +243,9 @@
         }
         // Build the current URL with ?t and #a/#b stripped, for sharing
         // a clean link without this script's own bookmarked state.
+        // Rewrite the current URL, keeping only min/max (dropping ?t and
+        // any other hash parameter), for a clean link without this
+        // script's own bookmarked state.
         clean() {
             const url = new URL(location.href);
             const hashParams = new URLSearchParams(url.hash.slice(1));
@@ -253,10 +256,10 @@
                 }
             }
             url.hash = hashParams.toString() || '';
-            return url.toString();
+            history.replaceState(null, '', url);
         }
-        copy(text) {
-            navigator.clipboard.writeText(text)
+        copy() {
+            navigator.clipboard.writeText(location.href)
                 .catch(() => console.log('[AB LOOP] failed to copy URL to clipboard'));
         }
         // Seek to `position`, clamped to the hard range. No-op if null.
@@ -364,7 +367,8 @@
                 loopPlayer.normalize();
             }],
         ['d', () => loopPlayer.show()],
-        [',', () => loopPlayer.copy(loopPlayer.clean())]
+        [',', () => loopPlayer.clean()],
+        ['.', () => loopPlayer.copy()]
     ]);
     document.addEventListener('keydown', (event) => {
         if (isTyping(event.target)) {
