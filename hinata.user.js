@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         hinata
 // @namespace    https://github.com/ieremi/hinata
-// @version      2.41
+// @version      2.42
 // @description  YouTube A-B loop
 // @match        https://www.youtube.com/watch*
 // @updateURL    https://raw.githubusercontent.com/ieremi/hinata/main/hinata.user.js
@@ -255,7 +255,6 @@
                 return;
             }
             this.seek(this.softRange.a);
-            this.show();
         }
         take(seconds) {
             const video = getVideo();
@@ -264,7 +263,6 @@
             }
             this.softRange.take(video.currentTime, seconds, this.hardRange);
             this.seek(this.softRange.a);
-            this.show();
         }
         nudgeA(delta) {
             if (this.softRange.a === null) {
@@ -272,14 +270,12 @@
             }
             this.softRange.nudgeA(delta, this.hardRange);
             this.seek(this.softRange.a);
-            this.show();
         }
         nudgeB(delta) {
             if (this.softRange.b === null) {
                 return;
             }
             this.softRange.nudgeB(delta, this.hardRange);
-            this.show();
         }
         tick() {
             const video = getVideo();
@@ -311,7 +307,6 @@
             }
             this.normalize();
             this.seek(this.softRange.a);
-            this.show();
         }
     }
     const loopPlayer = new LoopPlayer();
@@ -328,22 +323,19 @@
         ['p', () => {
                 loopPlayer.softRange.initialize(loopPlayer.hardRange);
                 loopPlayer.seek(loopPlayer.softRange.a);
-                loopPlayer.show();
             }],
         ['P', () => {
                 if (!loopPlayer.hardRange.copyFrom(loopPlayer.softRange)) {
                     return;
                 }
                 loopPlayer.normalize();
-                loopPlayer.show();
             }],
-        ['l', () => { loopPlayer.softRange.unbind(); loopPlayer.show(); }],
-        ['L', () => { loopPlayer.hardRange.unbind(); loopPlayer.show(); }],
-        ['s', () => { loopPlayer.seek(loopPlayer.softRange.a); loopPlayer.show(); }],
+        ['l', () => loopPlayer.softRange.unbind()],
+        ['L', () => loopPlayer.hardRange.unbind()],
+        ['s', () => loopPlayer.seek(loopPlayer.softRange.a)],
         ['S', () => {
                 const b = loopPlayer.softRange.b;
                 loopPlayer.seek(b === null ? null : b - 2);
-                loopPlayer.show();
             }],
         ['2', () => loopPlayer.take(2)],
         ['4', () => loopPlayer.take(4)],
@@ -351,8 +343,8 @@
                 loopPlayer.hardRange.round();
                 loopPlayer.softRange.round();
                 loopPlayer.normalize();
-                loopPlayer.show();
-            }]
+            }],
+        ['d', () => loopPlayer.show()]
     ]);
     document.addEventListener('keydown', (event) => {
         if (isTyping(event.target)) {
