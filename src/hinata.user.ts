@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         hinata
 // @namespace    https://github.com/ieremi/hinata
-// @version      2.47
+// @version      2.49
 // @description  YouTube A-B loop
 // @match        https://www.youtube.com/watch*
 // @updateURL    https://raw.githubusercontent.com/ieremi/hinata/main/hinata.user.js
@@ -12,37 +12,41 @@
 (function () {
     'use strict';
 
-    function getVideo(): HTMLVideoElement | null {
-        return document.querySelector('video');
-    }
-
-    function parseNumber(value: string | null): number | null {
-        if (value === null || value === '') {
-            return null;
+    class Page {
+        static getVideo(): HTMLVideoElement | null {
+            return document.querySelector('video');
         }
 
-        const number = Number(value);
-        return Number.isFinite(number) ? number : null;
-    }
+        static isTyping(element: HTMLElement | null): boolean {
+            return (
+                element instanceof HTMLInputElement ||
+                element instanceof HTMLTextAreaElement ||
+                !!element?.isContentEditable
+            );
+        }
 
-    function setOrDelete(params: URLSearchParams, name: string, value: number | null): void {
-        if (value === null) {
-            params.delete(name);
-        } else {
-            params.set(name, String(value));
+        static setOrDelete(params: URLSearchParams, name: string, value: number | null): void {
+            if (value === null) {
+                params.delete(name);
+            } else {
+                params.set(name, String(value));
+            }
         }
     }
 
-    function format(value: number | null): string | number {
-        return value === null ? '–' : value;
-    }
+    class Helper {
+        static parseNumber(value: string | null): number | null {
+            if (value === null || value === '') {
+                return null;
+            }
 
-    function isTyping(element: HTMLElement | null): boolean {
-        return (
-            element instanceof HTMLInputElement ||
-            element instanceof HTMLTextAreaElement ||
-            !!element?.isContentEditable
-        );
+            const number = Number(value);
+            return Number.isFinite(number) ? number : null;
+        }
+
+        static format(value: number | null): string | number {
+            return value === null ? '–' : value;
+        }
     }
 
     // A point in time within the video, in seconds.
@@ -70,7 +74,7 @@
         }
 
         format(loLabel: string, hiLabel: string): string {
-            return `${loLabel}=${format(this.lo)} ${hiLabel}=${format(this.hi)}`;
+            return `${loLabel}=${Helper.format(this.lo)} ${hiLabel}=${Helper.format(this.hi)}`;
         }
 
         // Persist lo/hi into the URL hash under loName/hiName.
@@ -78,8 +82,8 @@
             const url = new URL(location.href);
             const params = new URLSearchParams(url.hash.slice(1));
 
-            setOrDelete(params, loName, this.lo);
-            setOrDelete(params, hiName, this.hi);
+            Page.setOrDelete(params, loName, this.lo);
+            Page.setOrDelete(params, hiName, this.hi);
 
             url.hash = params.toString() || '';
             history.replaceState(null, '', url);
@@ -90,11 +94,11 @@
     class HardRange extends Range {
         static readFrom(hashParams: URLSearchParams): HardRange {
             const min = hashParams.has('min')
-                ? parseNumber(hashParams.get('min'))
+                ? Helper.parseNumber(hashParams.get('min'))
                 : null;
 
             const max = hashParams.has('max')
-                ? parseNumber(hashParams.get('max'))
+                ? Helper.parseNumber(hashParams.get('max'))
                 : null;
 
             return new HardRange(min, max);
@@ -169,11 +173,11 @@
     class SoftRange extends Range {
         static readFrom(hashParams: URLSearchParams, hardRange: HardRange, initialA: Pos | null): SoftRange {
             const a = hashParams.has('a')
-                ? parseNumber(hashParams.get('a'))
+                ? Helper.parseNumber(hashParams.get('a'))
                 : hardRange.min ?? initialA;
 
             const b = hashParams.has('b')
-                ? parseNumber(hashParams.get('b'))
+                ? Helper.parseNumber(hashParams.get('b'))
                 : hardRange.max;
 
             return new SoftRange(a, b);
@@ -352,7 +356,7 @@
                 return;
             }
 
-            const video = getVideo();
+            const video = Page.getVideo();
 
             if (video) {
                 video.currentTime = this.hardRange.clamp(position);
@@ -368,7 +372,7 @@
         }
 
         take(seconds: number): void {
-            const video = getVideo();
+            const video = Page.getVideo();
 
             if (!video) {
                 return;
@@ -396,7 +400,7 @@
         }
 
         tick(): void {
-            const video = getVideo();
+            const video = Page.getVideo();
 
             if (!video) {
                 return;
@@ -425,7 +429,7 @@
         }
 
         start(): void {
-            const video = getVideo();
+            const video = Page.getVideo();
 
             if (!video) {
                 setTimeout(() => this.start(), 200);
@@ -481,7 +485,7 @@
     ]);
 
     document.addEventListener('keydown', (event: KeyboardEvent) => {
-        if (isTyping(event.target as HTMLElement | null)) {
+        if (Page.isTyping(event.target as HTMLElement | null)) {
             return;
         }
 
