@@ -3,16 +3,13 @@
     "target": "ES2021",
     "lib": ["ES2021", "DOM"],
     "module": "esnext",
+    "moduleResolution": "bundler",
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noImplicitReturns": true,
     "forceConsistentCasingInFileNames": true,
-    "removeComments": false,
-    "newLine": "lf",
-    "rootDir": "src",
-    "outDir": "."
+    "noEmit": true
   },
-  "include": ["src/hinata.user.ts"],
-  "exclude": []
+  "include": ["src/**/*.ts"]
 }

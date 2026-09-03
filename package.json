@@ -4,10 +4,11 @@
   "version": "1.0.0",
   "description": "YouTube A-B loop userscript",
   "scripts": {
-    "build": "tsc -p tsconfig.json && node scripts/postbuild.mjs",
-    "watch": "tsc -p tsconfig.json --watch"
+    "build": "tsc -p tsconfig.json && node scripts/bundle.mjs && node scripts/postbuild.mjs",
+    "typecheck": "tsc -p tsconfig.json --watch"
   },
   "devDependencies": {
+    "esbuild": "^0.28.2",
     "typescript": "^7.0.2"
   }
 }

@@ -1,0 +1,10 @@
+// ==UserScript==
+// @name         hinata
+// @namespace    https://github.com/ieremi/hinata
+// @version      2.50
+// @description  YouTube A-B loop
+// @match        https://www.youtube.com/watch*
+// @updateURL    https://raw.githubusercontent.com/ieremi/hinata/main/hinata.user.js
+// @downloadURL    https://raw.githubusercontent.com/ieremi/hinata/main/hinata.user.js
+// @grant        none
+// ==/UserScript==
