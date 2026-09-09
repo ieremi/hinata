@@ -4,6 +4,9 @@ import { LoopPlayer } from './loop-player';
 (function () {
     'use strict';
 
+    const instanceId = Math.random().toString(36).slice(2);
+    console.log('[AB LOOP] script instance', instanceId, location.href);
+
     const loopPlayer = new LoopPlayer();
     let currentVideoId = Page.getVideoId();
 
@@ -87,6 +90,8 @@ import { LoopPlayer } from './loop-player';
         }
 
         const videoId = Page.getVideoId();
+
+        console.log('[AB LOOP] yt-navigate-finish', instanceId, currentVideoId, '->', videoId, location.href);
 
         if (videoId === currentVideoId) {
             return;

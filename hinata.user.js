@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         hinata
 // @namespace    https://github.com/ieremi/hinata
-// @version      2.53
+// @version      2.54
 // @description  YouTube A-B loop
 // @match        https://www.youtube.com/watch*
 // @updateURL    https://raw.githubusercontent.com/ieremi/hinata/main/hinata.user.js
@@ -349,6 +349,8 @@
   // src/hinata.user.ts
   (function() {
     "use strict";
+    const instanceId = Math.random().toString(36).slice(2);
+    console.log("[AB LOOP] script instance", instanceId, location.href);
     const loopPlayer = new LoopPlayer();
     let currentVideoId = Page.getVideoId();
     setInterval(() => loopPlayer.tick(), 50);
@@ -410,6 +412,7 @@
         return;
       }
       const videoId = Page.getVideoId();
+      console.log("[AB LOOP] yt-navigate-finish", instanceId, currentVideoId, "->", videoId, location.href);
       if (videoId === currentVideoId) {
         return;
       }
