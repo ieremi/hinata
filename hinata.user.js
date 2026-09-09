@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         hinata
 // @namespace    https://github.com/ieremi/hinata
-// @version      2.52
+// @version      2.53
 // @description  YouTube A-B loop
 // @match        https://www.youtube.com/watch*
 // @updateURL    https://raw.githubusercontent.com/ieremi/hinata/main/hinata.user.js
@@ -13,6 +13,14 @@
   var Page = class {
     static getVideo() {
       return document.querySelector("video");
+    }
+    // The `v` query param identifying the current video. yt-navigate-finish
+    // fires even on the initial page load and on URL rewrites (e.g. YouTube
+    // consuming its own ?t= share-link param), not just on switching videos,
+    // so callers must compare this against the previous value to tell an
+    // actual video change from a spurious re-fire.
+    static getVideoId() {
+      return new URL(location.href).searchParams.get("v");
     }
     static isTyping(element) {
       return element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement || !!element?.isContentEditable;
@@ -236,7 +244,6 @@
     // videos does not reload the page, so this must be called again on
     // client-side navigation or the previous video's range would stick.
     readLocation() {
-      console.log("[AB LOOP] readLocation", location.href);
       const url = new URL(location.href);
       const hashParams = new URLSearchParams(url.hash.slice(1));
       const t = parseInt(url.searchParams.get("t") ?? "", 10);
@@ -343,6 +350,7 @@
   (function() {
     "use strict";
     const loopPlayer = new LoopPlayer();
+    let currentVideoId = Page.getVideoId();
     setInterval(() => loopPlayer.tick(), 50);
     const keyActions = /* @__PURE__ */ new Map([
       ["a", () => loopPlayer.nudgeA(-1)],
@@ -401,6 +409,11 @@
       if (!location.pathname.startsWith("/watch")) {
         return;
       }
+      const videoId = Page.getVideoId();
+      if (videoId === currentVideoId) {
+        return;
+      }
+      currentVideoId = videoId;
       loopPlayer.readLocation();
       loopPlayer.start();
     });

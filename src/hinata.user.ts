@@ -5,6 +5,7 @@ import { LoopPlayer } from './loop-player';
     'use strict';
 
     const loopPlayer = new LoopPlayer();
+    let currentVideoId = Page.getVideoId();
 
     setInterval(() => loopPlayer.tick(), 50);
 
@@ -75,11 +76,23 @@ import { LoopPlayer } from './loop-player';
     }, true);
 
     // YouTube dispatches this on document after a client-side (SPA) navigation
-    // finishes, e.g. clicking to the next video. Re-sync to the new video.
+    // finishes, e.g. clicking to the next video — but also on the initial page
+    // load and on URL rewrites that aren't a real navigation (e.g. YouTube
+    // consuming its own ?t= share-link param and stripping our hash in the
+    // process). Only re-sync when the video actually changed, or a stray
+    // fire would wipe out the min/max we already parsed.
     document.addEventListener('yt-navigate-finish', () => {
         if (!location.pathname.startsWith('/watch')) {
             return;
         }
+
+        const videoId = Page.getVideoId();
+
+        if (videoId === currentVideoId) {
+            return;
+        }
+
+        currentVideoId = videoId;
 
         loopPlayer.readLocation();
         loopPlayer.start();
