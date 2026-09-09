@@ -34,6 +34,15 @@ export class LoopPlayer {
         this.softRange.normalize(this.hardRange);
     }
 
+    // Re-assert min/max/a/b into the URL from what's already in memory,
+    // without re-reading the URL. Used to restore our hash after YouTube
+    // rewrites the URL on its own (e.g. consuming its own ?t= param),
+    // which strips any hash it doesn't recognize.
+    persist(): void {
+        this.hardRange.persist();
+        this.softRange.persist();
+    }
+
     show(): void {
         console.log(`[AB LOOP] ${this.hardRange.format()} ${this.softRange.format()}`);
     }

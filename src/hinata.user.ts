@@ -4,9 +4,6 @@ import { LoopPlayer } from './loop-player';
 (function () {
     'use strict';
 
-    const instanceId = Math.random().toString(36).slice(2);
-    console.log('[AB LOOP] script instance', instanceId, location.href);
-
     const loopPlayer = new LoopPlayer();
     let currentVideoId = Page.getVideoId();
 
@@ -82,8 +79,9 @@ import { LoopPlayer } from './loop-player';
     // finishes, e.g. clicking to the next video — but also on the initial page
     // load and on URL rewrites that aren't a real navigation (e.g. YouTube
     // consuming its own ?t= share-link param and stripping our hash in the
-    // process). Only re-sync when the video actually changed, or a stray
-    // fire would wipe out the min/max we already parsed.
+    // process). Only re-sync from the URL when the video actually changed;
+    // otherwise just re-assert our own hash, since YouTube's rewrite may
+    // have stripped it.
     document.addEventListener('yt-navigate-finish', () => {
         if (!location.pathname.startsWith('/watch')) {
             return;
@@ -91,9 +89,8 @@ import { LoopPlayer } from './loop-player';
 
         const videoId = Page.getVideoId();
 
-        console.log('[AB LOOP] yt-navigate-finish', instanceId, currentVideoId, '->', videoId, location.href);
-
         if (videoId === currentVideoId) {
+            loopPlayer.persist();
             return;
         }
 

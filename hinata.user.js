@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         hinata
 // @namespace    https://github.com/ieremi/hinata
-// @version      2.54
+// @version      2.55
 // @description  YouTube A-B loop
 // @match        https://www.youtube.com/watch*
 // @updateURL    https://raw.githubusercontent.com/ieremi/hinata/main/hinata.user.js
@@ -255,6 +255,14 @@
       this.hardRange.normalize();
       this.softRange.normalize(this.hardRange);
     }
+    // Re-assert min/max/a/b into the URL from what's already in memory,
+    // without re-reading the URL. Used to restore our hash after YouTube
+    // rewrites the URL on its own (e.g. consuming its own ?t= param),
+    // which strips any hash it doesn't recognize.
+    persist() {
+      this.hardRange.persist();
+      this.softRange.persist();
+    }
     show() {
       console.log(`[AB LOOP] ${this.hardRange.format()} ${this.softRange.format()}`);
     }
@@ -349,8 +357,6 @@
   // src/hinata.user.ts
   (function() {
     "use strict";
-    const instanceId = Math.random().toString(36).slice(2);
-    console.log("[AB LOOP] script instance", instanceId, location.href);
     const loopPlayer = new LoopPlayer();
     let currentVideoId = Page.getVideoId();
     setInterval(() => loopPlayer.tick(), 50);
@@ -412,8 +418,8 @@
         return;
       }
       const videoId = Page.getVideoId();
-      console.log("[AB LOOP] yt-navigate-finish", instanceId, currentVideoId, "->", videoId, location.href);
       if (videoId === currentVideoId) {
+        loopPlayer.persist();
         return;
       }
       currentVideoId = videoId;
