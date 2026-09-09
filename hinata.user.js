@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         hinata
 // @namespace    https://github.com/ieremi/hinata
-// @version      2.50
+// @version      2.51
 // @description  YouTube A-B loop
 // @match        https://www.youtube.com/watch*
 // @updateURL    https://raw.githubusercontent.com/ieremi/hinata/main/hinata.user.js
@@ -250,13 +250,17 @@
     show() {
       console.log(`[AB LOOP] ${this.hardRange.format()} ${this.softRange.format()}`);
     }
-    // Rewrite the current URL, keeping only min/max (dropping ?t and
-    // any other hash parameter), for a clean link without this
-    // script's own bookmarked state.
+    // Rewrite the current URL, keeping only min/max (dropping any other
+    // hash parameter) and setting ?t= to the hard range's min, for a
+    // clean link without this script's own bookmarked state.
     clean() {
       const url = new URL(location.href);
       const hashParams = new URLSearchParams(url.hash.slice(1));
-      url.searchParams.delete("t");
+      if (this.hardRange.min !== null) {
+        url.searchParams.set("t", String(this.hardRange.min));
+      } else {
+        url.searchParams.delete("t");
+      }
       for (const name of [...hashParams.keys()]) {
         if (name !== "min" && name !== "max") {
           hashParams.delete(name);
@@ -335,7 +339,7 @@
   };
 
   // src/hinata.user.ts
-  (function() {
+  (function () {
     "use strict";
     const loopPlayer = new LoopPlayer();
     setInterval(() => loopPlayer.tick(), 50);

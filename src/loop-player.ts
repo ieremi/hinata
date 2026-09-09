@@ -38,14 +38,18 @@ export class LoopPlayer {
         console.log(`[AB LOOP] ${this.hardRange.format()} ${this.softRange.format()}`);
     }
 
-    // Rewrite the current URL, keeping only min/max (dropping ?t and
-    // any other hash parameter), for a clean link without this
-    // script's own bookmarked state.
+    // Rewrite the current URL, keeping only min/max (dropping any other
+    // hash parameter) and setting ?t= to the hard range's min, for a
+    // clean link without this script's own bookmarked state.
     clean(): void {
         const url = new URL(location.href);
         const hashParams = new URLSearchParams(url.hash.slice(1));
 
-        url.searchParams.delete('t');
+        if (this.hardRange.min !== null) {
+            url.searchParams.set('t', String(this.hardRange.min));
+        } else {
+            url.searchParams.delete('t');
+        }
 
         for (const name of [...hashParams.keys()]) {
             if (name !== 'min' && name !== 'max') {
