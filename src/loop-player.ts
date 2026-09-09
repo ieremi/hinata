@@ -16,6 +16,8 @@ export class LoopPlayer {
     // videos does not reload the page, so this must be called again on
     // client-side navigation or the previous video's range would stick.
     readLocation(): void {
+        console.log('[AB LOOP] readLocation', location.href);
+
         const url = new URL(location.href);
         const hashParams = new URLSearchParams(url.hash.slice(1));
 

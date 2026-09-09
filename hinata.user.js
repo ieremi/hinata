@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         hinata
 // @namespace    https://github.com/ieremi/hinata
-// @version      2.51
+// @version      2.52
 // @description  YouTube A-B loop
 // @match        https://www.youtube.com/watch*
 // @updateURL    https://raw.githubusercontent.com/ieremi/hinata/main/hinata.user.js
@@ -236,6 +236,7 @@
     // videos does not reload the page, so this must be called again on
     // client-side navigation or the previous video's range would stick.
     readLocation() {
+      console.log("[AB LOOP] readLocation", location.href);
       const url = new URL(location.href);
       const hashParams = new URLSearchParams(url.hash.slice(1));
       const t = parseInt(url.searchParams.get("t") ?? "", 10);
@@ -339,7 +340,7 @@
   };
 
   // src/hinata.user.ts
-  (function () {
+  (function() {
     "use strict";
     const loopPlayer = new LoopPlayer();
     setInterval(() => loopPlayer.tick(), 50);
