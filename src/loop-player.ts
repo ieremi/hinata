@@ -128,7 +128,10 @@ export class LoopPlayer {
     tick(): void {
         const video = Page.getVideo();
 
-        if (!video) {
+        // Don't touch currentTime while the player is still loading or
+        // seeking: YouTube sets its own start position during load, and
+        // fighting it every tick keeps it from ever finishing.
+        if (!video || video.readyState < HTMLMediaElement.HAVE_METADATA || video.seeking) {
             return;
         }
 
@@ -157,7 +160,7 @@ export class LoopPlayer {
     start(): void {
         const video = Page.getVideo();
 
-        if (!video) {
+        if (!video || video.readyState < HTMLMediaElement.HAVE_METADATA) {
             setTimeout(() => this.start(), 200);
             return;
         }

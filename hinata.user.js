@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         hinata
 // @namespace    https://github.com/ieremi/hinata
-// @version      2.55
+// @version      2.56
 // @description  YouTube A-B loop
 // @match        https://www.youtube.com/watch*
 // @updateURL    https://raw.githubusercontent.com/ieremi/hinata/main/hinata.user.js
@@ -327,7 +327,7 @@
     }
     tick() {
       const video = Page.getVideo();
-      if (!video) {
+      if (!video || video.readyState < HTMLMediaElement.HAVE_METADATA || video.seeking) {
         return;
       }
       if (this.softRange.a !== null && this.softRange.b !== null && video.currentTime >= this.softRange.b) {
@@ -345,7 +345,7 @@
     }
     start() {
       const video = Page.getVideo();
-      if (!video) {
+      if (!video || video.readyState < HTMLMediaElement.HAVE_METADATA) {
         setTimeout(() => this.start(), 200);
         return;
       }
