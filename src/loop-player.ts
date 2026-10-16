@@ -68,7 +68,7 @@ export class LoopPlayer {
 
         url.hash = hashParams.toString() || '';
 
-        history.replaceState(null, '', url);
+        history.replaceState(history.state, '', url);
     }
 
     copy(): void {

@@ -36,6 +36,6 @@ export class Range {
         Page.setOrDelete(params, hiName, this.hi);
 
         url.hash = params.toString() || '';
-        history.replaceState(null, '', url);
+        history.replaceState(history.state, '', url);
     }
 }

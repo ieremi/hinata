@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         hinata
 // @namespace    https://github.com/ieremi/hinata
-// @version      2.56
+// @version      2.57
 // @description  YouTube A-B loop
 // @match        https://www.youtube.com/watch*
 // @updateURL    https://raw.githubusercontent.com/ieremi/hinata/main/hinata.user.js
@@ -72,7 +72,7 @@
       Page.setOrDelete(params, loName, this.lo);
       Page.setOrDelete(params, hiName, this.hi);
       url.hash = params.toString() || "";
-      history.replaceState(null, "", url);
+      history.replaceState(history.state, "", url);
     }
   };
 
@@ -283,7 +283,7 @@
         }
       }
       url.hash = hashParams.toString() || "";
-      history.replaceState(null, "", url);
+      history.replaceState(history.state, "", url);
     }
     copy() {
       navigator.clipboard.writeText(location.href).catch(() => console.log("[AB LOOP] failed to copy URL to clipboard"));
